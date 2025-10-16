@@ -1,0 +1,13 @@
+CREATE TABLE users (
+    user_id SERIAL PRIMARY KEY,
+    username TEXT,
+    password TEXT
+);
+
+CREATE TABLE projects (
+    project_id SERIAL PRIMARY KEY,
+    name TEXT,
+    description TEXT,
+    owner INTEGER,
+    FOREIGN KEY(owner) REFERENCES users(user_id)
+);
