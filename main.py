@@ -1,18 +1,30 @@
-from typing import Union, List
-from fastapi import FastAPI
+from typing import Union
+from http import HTTPStatus
+from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
+from sqlalchemy import select
+from hashlib import sha1
+
+from sqlalchemy.exc import NoResultFound
 
 from example_data import users, projects
+import database.db_orm as db
 
-user_logged = None
+"""
+TODO: Lines 60 and 124
+"""
+
+session = db.Session() # Initialize the db (SQLAlchemy-Postgres session)
+user_logged: Union[db.User, None] = None  # Simulate the user's session behavior
 
 class User(BaseModel):
-    name: str
+    user_id: int = None
+    username: str
     password: str
     check_password: Union[str, None] = None
 
 class Project(BaseModel):
-    id: str
+    project_id: int = None
     name: str
     description: str = None
     owner: str = None
@@ -21,6 +33,14 @@ app = FastAPI()
 
 @app.get("/auth")
 def get_users():
+    users_db = session.execute(select(db.User)).scalars().all()
+    users = []
+    for user_db in users_db:
+        if user_db.username and user_db.password:
+            user = User(user_id=user_db.user_id, username=user_db.username, password=user_db.password)
+            users.append(user)
+        else:
+            raise HTTPException(status_code=HTTPStatus.SERVICE_UNAVAILABLE, detail="Unaccessible db")
     return users
 
 # Project requirements
@@ -31,128 +51,213 @@ def create_user(user: User):
     :param user: Account username and password (JSON)
     :return: dict with a message related to the process done
     """
-    global users
-
-    name = user.name
+    username = user.username
     password = user.password
     check_password = user.check_password
 
-    if name and password and check_password:    #Checks if the user provides the entire info needed for the process
-        existing_user = name in [user['name'] for user in users] # Checks if the user already exists
-        if existing_user:
-            return {
-                'message': f"Username '{name}' is not unavailable, try using another one"
-            }
-        else:
-            if password != check_password: #Checks if the user writes correctly his password
-                return {'message': f"Your password and its repetition are not the same, try it again please."}
-            else:
+    if username and password and check_password:    #Checks if the user provides the entire info needed for the process
+        try:
+            usernames_db = session.execute(
+                select(db.User.username).where(db.User.username == username)
+            ).scalar_one_or_none()
+        except Exception as error:
+            raise HTTPException(status_code=HTTPStatus.INTERNAL_SERVER_ERROR, detail=error)
+        if not usernames_db:
+            if password == check_password:
                 # Successfully register the new account
-                new_user = {'name': name, 'password': password}
-                users.append(new_user)
-                return {'message': f"User '{name}' successfully created!"}
+                new_user = db.User(username=username, password=sha1(password.encode()).hexdigest())
+                try:
+                    session.add(new_user)
+                    session.commit()
+                    return {'message': f"User '{username}' successfully created!"}
+                except Exception as e:
+                    session.rollback()
+                    raise HTTPException(status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
+                                        detail=f"ERROR - User creation failed: {e}")
+            else:
+                raise HTTPException(status_code=HTTPStatus.BAD_REQUEST,
+                                    detail=f"Your password and its repetition are not the same, try it again please.")
+        else:
+            raise HTTPException(status_code=HTTPStatus.BAD_REQUEST,
+                                detail=f"Username '{username}' unavailable, try using another one")
     else:
-        return {
-            'message': "You must to provide proper username and password to sign up, please fill in the entire form"
-        }
+        raise HTTPException(
+            status_code=HTTPStatus.BAD_REQUEST,
+            detail="You must to provide proper username and password to sign up, please fill in the entire form")
 
 @app.post("/login")
 def login_service(user: User):
-    usernames = [user['name'] for user in users]
-    if user.name in usernames:
-        index = usernames.index(user.name)
-        if users[index]['password'] == user.password:
+    username = user.username
+    password = sha1(user.password.encode()).hexdigest()
+    try:
+        user_db = session.execute(select(db.User).where(db.User.username == username)).scalar_one_or_none()
+    except Exception as error:
+        raise HTTPException(status_code=HTTPStatus.INTERNAL_SERVER_ERROR, detail=error)
+    if user_db:
+        if user_db.password == password:
             global user_logged
-            user_logged = user.name
-            return {'message': "Logged in successfully!", 'current_user': user_logged}
+            user_logged = user_db
+            return {'detail': "Logged in successfully!", 'current_user': user_logged.username}
         else:
-            return {'message': "Incorrect username and/or password."}
-    return {'message': "Incorrect username and / or password."}
+            raise HTTPException(status_code=HTTPStatus.BAD_REQUEST,
+                                detail="Incorrect username and/or password.")
+    raise HTTPException(status_code=HTTPStatus.BAD_REQUEST,
+                        detail="Incorrect username and / or password.")
+
 
 @app.get("/logout")
 def logout_service():
     global user_logged
     if user_logged:
         user_logged = None
-        return {'message': "Successfully logged out!", 'current_user': user_logged}
+        return {'detail': "Successfully logged out!", 'current_user': user_logged}
     else:
-        return {'message': "No Session is active right now!"}
+        raise HTTPException(status_code=HTTPStatus.BAD_REQUEST,
+                            detail="No Session is active right now!")
 
 @app.get("/projects")
 def get_projects():
     if user_logged:
-        user_projects: List[dict] = [project for project in projects if user_logged in project['owner']]
-        if len(user_projects) == 0:
-            return {'message': "No projects created yet!"}
+        try:
+            user_projects_db = session.execute(
+                select(db.Project).join(db.User).where(db.Project.owner == user_logged.user_id)
+            ).scalars().all()
+        except Exception as error:
+            raise HTTPException(status_code=HTTPStatus.INTERNAL_SERVER_ERROR, detail=error)
+        if len(user_projects_db) == 0:
+            return {'detail': "No projects were created yet!"}
         else:
-            return user_projects
+            list_projects = []
+            for project_db in user_projects_db:
+                list_projects.append(
+                    Project(
+                        project_id=project_db.project_id,
+                        name=project_db.name,
+                        description=project_db.description,
+                        owner=project_db.user.username
+                    )
+                )
+            return list_projects
     else:
-        return {'message': 'You must to be logged in, try it first.', 'current_user': user_logged}
+        raise HTTPException(status_code=HTTPStatus.UNAUTHORIZED,
+                            detail="No Session is active right now, try to log in first.")
 
 @app.post("/projects")
 def create_project(project: Project):
+    name = project.name
+    description = project.description
     if user_logged:
-        id = project.id
-        name = project.name
-        if id and name:
-            user_project_ids = [project['id'] for project in projects if user_logged in project['owner']]
-            if id in user_project_ids:
-                return  {'message': f"Id '{id}' is currently used, changed it.", 'current_user': user_logged}
+        if name :
+            try:
+                user_project = session.execute(
+                    select(db.Project.name).where((db.Project.name == name) & (db.Project.owner == user_logged.user_id))
+                ).scalar_one_or_none()
+            except Exception as error:
+                raise HTTPException(status_code=HTTPStatus.INTERNAL_SERVER_ERROR, detail=error)
+            if not user_project:
+                new_project = db.Project(
+                    name=name, description=description, owner=user_logged.user_id
+                )
+                try:
+                    session.add(new_project)    # HAY QUE MANEJAR ESTO CON UN TRY-CATCH
+                    session.commit()
+                    return {'message': f"Project '{name}' successfully created.", 'current_user': user_logged.username}
+                except Exception as e:
+                    raise HTTPException(status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
+                                        detail=f"ERROR - Project creation failed: {e}")
             else:
-                project = project.model_dump()
-                project['owner'] = user_logged
-                projects.append(project)
-                return {'message':f"Project '{project['name']}' successfully created.", 'project_id': project['id'], 'current_user': user_logged}
+                raise HTTPException(status_code=HTTPStatus.BAD_REQUEST,
+                                    detail=f"Project name '{name}' is currently used, changed it.")
         else:
-            return {
-            'message': "Missing data, please fill in the entire form to create a new project."
-        }
+            raise HTTPException(status_code=HTTPStatus.BAD_REQUEST,
+                                detail="Missing data, please fill in the entire form to create a new project.")
     else:
-        return {'message': 'You must be logged in, try it first.', 'current_user': user_logged}
+        raise HTTPException(status_code=HTTPStatus.UNAUTHORIZED,
+                            detail="No Session is active right now, try to log in first.")
 
 @app.get("/project/{project_id}/info")
-def get_project_details(project_id:str):
+def get_project_details(project_id:int):
     if user_logged:
-        user_projects = [project for project in projects if user_logged in project['owner']]
-        user_projects_ids = [project['id'] for project in user_projects]
-        if project_id in user_projects_ids:
-            index = user_projects_ids.index(project_id)
-            return  user_projects[index]
+        try:
+            user_project_db = session.execute(
+                select(db.Project).join(db.User).where(
+                    (db.Project.owner == user_logged.user_id) & (db.Project.project_id == project_id)
+                )
+            ).scalar_one_or_none()
+        except Exception as error:
+            raise HTTPException(status_code=HTTPStatus.INTERNAL_SERVER_ERROR, detail=error)
+        if user_project_db:
+            project_info = Project(
+                project_id=user_project_db.project_id,
+                name=user_project_db.name,
+                description=user_project_db.description,
+                owner=user_project_db.user.username)
+            return  project_info
         else:
-            return {'message': 'No projects were found with that id. Try it again.', 'current_user': user_logged}
+            raise HTTPException(status_code=HTTPStatus.BAD_REQUEST,
+                                detail='No project was found with that id. Try it again.')
     else:
-        return {'message': 'You must to be logged in, try it first.', 'current_user': user_logged}
+        raise HTTPException(status_code=HTTPStatus.UNAUTHORIZED,
+                            detail="No Session is active right now, try to log in first.")
 
 @app.put("/project/{project_id}/info")
 def update_project_details(project_id:str, project: Project):
+    name = project.name
+    description = project.description
     if user_logged:
-        user_projects = [project for project in projects if user_logged in project['owner']]
-        user_projects_ids = [project['id'] for project in user_projects]
-        if project_id in user_projects_ids:
-            index = user_projects_ids.index(project_id)
-            user_projects[index].update(project.model_dump())
-            user_projects[index]['owner'] = user_logged
-            return {'message': 'Project successfully updated!', 'project_info': user_projects[index], 'current_user': user_logged}
+        try:
+            user_project_db = session.execute(
+                select(db.Project).where((db.Project.owner == user_logged.user_id) & (db.Project.project_id == project_id))
+            ).scalar_one_or_none()
+        except Exception as error:
+            raise HTTPException(status_code=HTTPStatus.INTERNAL_SERVER_ERROR, detail=error)
+        if user_project_db:
+            user_project_db.name = name if name else user_project_db.name
+            user_project_db.description = description if description else user_project_db.description
+            # Esto debe ir dentro de un try-except
+            try:
+                session.commit()
+            except Exception as e:
+                session.rollback()
+                raise HTTPException(status_code=HTTPStatus.INTERNAL_SERVER_ERROR, detail=f"ERROR - Project update failed: {e}")
+
+            updated_project = Project(
+                project_id=user_project_db.project_id,
+                name=user_project_db.name,
+                description=user_project_db.description,
+                owner=user_project_db.user.username
+            )
+            return updated_project
         else:
-            return {'message': 'No projects were found with that id. Try it again.', 'current_user': user_logged}
+            raise HTTPException(status_code=HTTPStatus.BAD_REQUEST,
+                                detail='No project was found with that id. Try it again.')
     else:
-        return {'message': 'You must to be logged in, try it first.', 'current_user': user_logged}
+        raise HTTPException(status_code=HTTPStatus.UNAUTHORIZED,
+                            detail="No Session is active right now, try to log in first.")
 
 @app.delete("/project/{project_id}")
 def delete_project(project_id:str):
     if user_logged:
-        user_projects = [project for project in projects if user_logged in project['owner']]
-        user_projects_ids = [project['id'] for project in user_projects]
-        if project_id in user_projects_ids:
-            for index, project in enumerate(projects):
-                if project['id'] == project_id and user_logged in project['owner'] :
-                    project_deleted = projects.pop(index)
-                    return {'message': 'Project successfully deleted!', 'project_info': project_deleted, 'current_user': user_logged}
-            return {'message': 'Project unsuccessfully deleted, try it again please', 'current_user': user_logged}
+        try:
+            user_project_db = session.execute(
+                select(db.Project).where((db.Project.owner == user_logged.user_id) & (db.Project.project_id == project_id))
+            ).scalar_one_or_none()
+        except Exception as error:
+            raise HTTPException(status_code=HTTPStatus.INTERNAL_SERVER_ERROR, detail=error)
+        if user_project_db:
+            try:
+                session.delete(user_project_db)
+                session.commit()
+                return {'message': f"Project '{project_id}' successfully deleted.", 'current_user': user_logged.username}
+            except Exception as e:
+                raise HTTPException(status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
+                                    detail=f"ERROR - Project deletion failed: {e}")
         else:
-            return {'message': 'No projects were found with that id. Try it again.', 'current_user': user_logged}
+            raise HTTPException(status_code=HTTPStatus.BAD_REQUEST,
+                                detail='No project was found with that id. Try it again.')
     else:
-        return {'message': 'You must to be logged in, try it first.', 'current_user': user_logged}
+        raise HTTPException(status_code=HTTPStatus.UNAUTHORIZED,
+                            detail="No Session is active right now, try to log in first.")
 
 # Endpoints to develop
 """

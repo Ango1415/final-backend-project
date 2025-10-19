@@ -2,7 +2,7 @@ from sqlalchemy import create_engine, String, ForeignKey, select
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, sessionmaker, relationship
 from hashlib import sha1
 
-CREATE_TABLES = True
+CREATE_TABLES = False
 
 # Set up the database connection
 username = 'postgres'
@@ -54,11 +54,11 @@ class Project(Base):
 
 # Set up the database session
 Session = sessionmaker(bind=engine)
-session = Session()
+
 
 if CREATE_TABLES:
     Base.metadata.create_all(engine)
-
+    session = Session()
     # Populating db
     # Use SQLAlchemy to add a new product
     user = User(username='angel_gomez', password=sha1('123'.encode()).hexdigest())
@@ -75,11 +75,22 @@ if CREATE_TABLES:
     session.add(project)
     session.commit()
 
-
-user = session.execute(select(User).where(User.username == 'angel_gomez')).scalar_one_or_none()
-print(user)
-print('----')
-users = session.execute(select(User)).scalars().all()
-for user in users:
+if __name__ == '__main__':
+    session = Session()
+    user = session.execute(select(User).where(User.username == 'angel_gomez')).scalar_one_or_none()
     print(user)
+    print('----')
+    users = session.execute(select(User)).scalars().all()
+    print(type(users))
+    for user in users:
+        print(user)
+        print(type(user))
+    print('----')
+    project = session.execute(
+        select(Project).join(User).where(
+            (Project.owner == 1) & (Project.project_id == 2)
+        )
+    ).scalar_one_or_none()
+    print(project)
+    print(project.user.user_id)
 
