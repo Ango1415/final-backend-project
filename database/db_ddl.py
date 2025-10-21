@@ -34,11 +34,34 @@ create_projects_table = """
     );
 """
 
+create_project_participants_table = """
+    CREATE TABLE project_participants (
+        proj_part_id SERIAL PRIMARY KEY NOT NULL,
+        user_id INTEGER NOT NULL,
+        project_id INTEGER NOT NULL,
+        FOREIGN KEY(user_id) REFERENCES users(user_id),
+        FOREIGN KEY(project_id) REFERENCES projects(project_id)
+    );
+"""
+
+create_documents_table = """
+    CREATE TABLE documents (
+        document_id SERIAL PRIMARY KEY NOT NULL,
+        attached_project INTEGER NOT NULL,
+        name TEXT NOT NULL,
+        format TEXT NOT NULL,
+        file_url TEXT NOT NULL,
+        FOREIGN KEY(attached_project) REFERENCES projects(project_id)  
+    );
+"""
+
 
 # Execute SQL commands to create tables
 try:
     cur.execute(create_users_table)
     cur.execute(create_projects_table)
+    cur.execute(create_project_participants_table)
+    cur.execute(create_documents_table)
     conn.commit()  # Commit changes to the database
     print("Tables created successfully")
 except Exception as e:

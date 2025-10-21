@@ -19,6 +19,7 @@ cur = conn.cursor()
 
 insert_users_records = "INSERT INTO users (username, password) VALUES (%s, %s)"
 insert_projects_records = "INSERT INTO projects (name, description, owner) VALUES (%s, %s, %s)"
+insert_project_participants_records = "INSERT INTO project_participants (user_id, project_id) VALUES (%s, %s)"
 users = [
     ("angel_gomez", sha1('123'.encode()).hexdigest()),
     ("fabian_estupinan", sha1('234'.encode()).hexdigest()),
@@ -29,9 +30,16 @@ projects = [
     ('main_project', 'Third project made for testing', 2)
 ]
 
+project_participants = [
+    (1, 1),
+    (1, 2),
+    (2, 3)
+]
+
 try:
     cur.executemany(insert_users_records, users)
     cur.executemany(insert_projects_records, projects)
+    cur.executemany(insert_project_participants_records, project_participants)
     conn.commit()
     print("Records inserted successfully")
 except Exception as e:

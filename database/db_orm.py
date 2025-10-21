@@ -7,8 +7,8 @@ CREATE_TABLES = False
 # Set up the database connection
 username = 'postgres'
 password = 'admin'
-host = 'localhost'  # or the IP address of your PostgreSQL server
-port = '5432'       # default PostgreSQL port
+host = 'localhost'  # or the IP address of your PostgresSQL server
+port = '5432'       # default PostgresSQL port
 database = 'python_web'
 
 engine = create_engine(f'postgresql://{username}:{password}@{host}:{port}/{database}')
@@ -16,7 +16,12 @@ engine = create_engine(f'postgresql://{username}:{password}@{host}:{port}/{datab
 
 # Define the base class
 class Base(DeclarativeBase):
-    pass
+    def to_dict(self):
+        db_dict = self.__dict__.copy()
+        if db_dict['_sa_instance_state']:
+            del db_dict['_sa_instance_state']
+        return db_dict
+
 # Define the Product class mapped to the 'products' table
 class User(Base):
     __tablename__ = 'users'
@@ -26,6 +31,11 @@ class User(Base):
 
     # Define a relationship to the User model
     projects: Mapped[list["Project"]] = relationship(back_populates="user", cascade="all, delete-orphan")
+
+    # Define relationship with ProjectParticipant model
+    project_participants: Mapped[list["ProjectParticipant"]] = relationship(back_populates="user",
+                                                                            cascade="all, delete-orphan")
+
 
     def __repr__(self) -> str:
         return f"""User(
@@ -43,6 +53,11 @@ class Project(Base):
 
     # Define a relationship to the User model
     user: Mapped[User] = relationship(back_populates="projects")
+    # Define relationship with Document model
+    documents: Mapped[list["Document"]] = relationship(back_populates="project", cascade="all, delete-orphan")
+    # Define relationship with ProjectParticipant model
+    project_participants: Mapped[list["ProjectParticipant"]] = relationship(back_populates="project",
+                                                                            cascade="all, delete-orphan")
 
     def __repr__(self) -> str:
         return f"""Project(
@@ -51,6 +66,49 @@ class Project(Base):
             owner={self.user!r}), 
             description={self.description!r}
         )"""
+
+class Document(Base):
+    __tablename__ = 'documents'
+    document_id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    name: Mapped[str] = mapped_column(String(50), nullable=False)
+    format: Mapped[str] = mapped_column(String(50), nullable=False)
+    file_url: Mapped[str] = mapped_column(String(200), nullable=False)
+    attached_project: Mapped[int] = mapped_column(ForeignKey('projects.project_id'), nullable=False)
+
+    # Define relationship with Project model
+    project: Mapped[Project] = relationship(back_populates="documents")
+
+    def __repr__(self) -> str:
+        return f"""Document(
+            document_id={self.document_id!r}, 
+            name={self.name!r}, 
+            format={self.format!r}, 
+            file_url={self.file_url!r}, 
+            attached_project={self.project!r}, 
+        )"""
+
+class ProjectParticipant(Base):
+    __tablename__ = 'project_participants'
+    proj_part_id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey('users.user_id'), nullable=False)
+    project_id: Mapped[int] = mapped_column(ForeignKey('projects.project_id'), nullable=False)
+
+    # Define relationship with User model
+    user: Mapped[User] = relationship(back_populates="project_participants")
+    #Define relationship with Project model
+    project: Mapped[Project] = relationship(back_populates="project_participants")
+
+    def __repr__(self) -> str:
+        return f"""ProjectParticipant(
+            proj_part_id={self.proj_part_id!r}, 
+            user_id={self.user_id!r}, 
+            project_id={self.project_id!r}, 
+            user={self.user!r}),
+            project={self.project!r})
+        )"""
+
+
+
 
 # Set up the database session
 Session = sessionmaker(bind=engine)
@@ -75,22 +133,33 @@ if CREATE_TABLES:
     session.add(project)
     session.commit()
 
+    project_participant = ProjectParticipant(user_id=1, project_id=1)
+    session.add(project_participant)
+    project_participant = ProjectParticipant(user_id=1, project_id=2)
+    session.add(project_participant)
+    project_participant = ProjectParticipant(user_id=2, project_id=3)
+    session.add(project_participant)
+    session.commit()
+
 if __name__ == '__main__':
     session = Session()
-    user = session.execute(select(User).where(User.username == 'angel_gomez')).scalar_one_or_none()
-    print(user)
-    print('----')
-    users = session.execute(select(User)).scalars().all()
-    print(type(users))
-    for user in users:
-        print(user)
-        print(type(user))
-    print('----')
-    project = session.execute(
-        select(Project).join(User).where(
-            (Project.owner == 1) & (Project.project_id == 2)
+
+    #projects_db = session.execute(
+    #    select(ProjectParticipant).where(ProjectParticipant.user_id == 1)
+    #).scalars().all()
+
+    desired_project_db = session.execute(
+        select(ProjectParticipant).where(
+            (ProjectParticipant.user_id == 2) & (ProjectParticipant.project_id == 2)
         )
     ).scalar_one_or_none()
-    print(project)
-    print(project.user.user_id)
 
+    print(f"""Project:
+        project id: {desired_project_db.project_id}
+        project name: {desired_project_db.project.name}
+        description: {desired_project_db.project.description}
+        owner: {desired_project_db.project.user.username}
+
+""")
+
+    session.close()
