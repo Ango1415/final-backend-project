@@ -22,11 +22,12 @@ class Base(DeclarativeBase):
             del db_dict['_sa_instance_state']
         return db_dict
 
+
 # Define the Product class mapped to the 'products' table
 class User(Base):
     __tablename__ = 'users'
     user_id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
-    username: Mapped[str] = mapped_column(String(50), nullable=False)
+    username: Mapped[str] = mapped_column(String(50), nullable=False, unique=True)
     password: Mapped[str] = mapped_column(String(100), nullable=False)
 
     # Define a relationship to the User model
@@ -36,7 +37,6 @@ class User(Base):
     project_participants: Mapped[list["ProjectParticipant"]] = relationship(back_populates="user",
                                                                             cascade="all, delete-orphan")
 
-
     def __repr__(self) -> str:
         return f"""User(
             user_id={self.user_id!r}, 
@@ -44,12 +44,13 @@ class User(Base):
             password={self.password!r})
         )"""
 
+
 class Project(Base):
     __tablename__ = 'projects'
     project_id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     name: Mapped[str] = mapped_column(String(50), nullable=False)
     description: Mapped[str] = mapped_column(String(200), nullable=True)
-    owner: Mapped[int] = mapped_column(ForeignKey('users.user_id'), nullable=False)
+    owner: Mapped[int] = mapped_column(ForeignKey('users.user_id', ondelete='CASCADE'), nullable=False)
 
     # Define a relationship to the User model
     user: Mapped[User] = relationship(back_populates="projects")
@@ -73,7 +74,8 @@ class Document(Base):
     name: Mapped[str] = mapped_column(String(50), nullable=False)
     format: Mapped[str] = mapped_column(String(50), nullable=False)
     file_url: Mapped[str] = mapped_column(String(200), nullable=False)
-    attached_project: Mapped[int] = mapped_column(ForeignKey('projects.project_id'), nullable=False)
+    attached_project: Mapped[int] = mapped_column(ForeignKey('projects.project_id', ondelete='CASCADE'),
+                                                  nullable=False)
 
     # Define relationship with Project model
     project: Mapped[Project] = relationship(back_populates="documents")
@@ -90,8 +92,9 @@ class Document(Base):
 class ProjectParticipant(Base):
     __tablename__ = 'project_participants'
     proj_part_id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
-    user_id: Mapped[int] = mapped_column(ForeignKey('users.user_id'), nullable=False)
-    project_id: Mapped[int] = mapped_column(ForeignKey('projects.project_id'), nullable=False)
+    user_id: Mapped[int] = mapped_column(ForeignKey('users.user_id', ondelete='CASCADE'), nullable=False)
+    project_id: Mapped[int] = mapped_column(ForeignKey('projects.project_id', ondelete='CASCADE'),
+                                            nullable=False)
 
     # Define relationship with User model
     user: Mapped[User] = relationship(back_populates="project_participants")
@@ -137,6 +140,8 @@ if CREATE_TABLES:
     session.add(project_participant)
     project_participant = ProjectParticipant(user_id=1, project_id=2)
     session.add(project_participant)
+    project_participant = ProjectParticipant(user_id=2, project_id=2)
+    session.add(project_participant)
     project_participant = ProjectParticipant(user_id=2, project_id=3)
     session.add(project_participant)
     session.commit()
@@ -144,22 +149,14 @@ if CREATE_TABLES:
 if __name__ == '__main__':
     session = Session()
 
-    #projects_db = session.execute(
-    #    select(ProjectParticipant).where(ProjectParticipant.user_id == 1)
-    #).scalars().all()
-
-    desired_project_db = session.execute(
-        select(ProjectParticipant).where(
-            (ProjectParticipant.user_id == 2) & (ProjectParticipant.project_id == 2)
+    document_db = session.execute(
+        select(Document).where(
+            (Document.document_id == 4)
         )
     ).scalar_one_or_none()
-
-    print(f"""Project:
-        project id: {desired_project_db.project_id}
-        project name: {desired_project_db.project.name}
-        description: {desired_project_db.project.description}
-        owner: {desired_project_db.project.user.username}
-
-""")
+    if document_db:
+        if document_db.project.owner == 3:
+            print('deleted')
+        print('Not deleted')
 
     session.close()

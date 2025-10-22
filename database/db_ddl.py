@@ -19,7 +19,7 @@ cur = conn.cursor()
 create_users_table = """
     CREATE TABLE users (
         user_id SERIAL PRIMARY KEY NOT NULL,
-        username TEXT NOT NULL,
+        username TEXT NOT NULL UNIQUE,
         password TEXT NOT NULL
     );
 """
@@ -30,7 +30,7 @@ create_projects_table = """
         name TEXT NOT NULL,
         description TEXT,
         owner INTEGER NOT NULL,
-        FOREIGN KEY(owner) REFERENCES users(user_id)
+        FOREIGN KEY(owner) REFERENCES users(user_id) ON DELETE CASCADE
     );
 """
 
@@ -39,8 +39,8 @@ create_project_participants_table = """
         proj_part_id SERIAL PRIMARY KEY NOT NULL,
         user_id INTEGER NOT NULL,
         project_id INTEGER NOT NULL,
-        FOREIGN KEY(user_id) REFERENCES users(user_id),
-        FOREIGN KEY(project_id) REFERENCES projects(project_id)
+        FOREIGN KEY(user_id) REFERENCES users(user_id) ON DELETE CASCADE,
+        FOREIGN KEY(project_id) REFERENCES projects(project_id) ON DELETE CASCADE
     );
 """
 
@@ -50,8 +50,8 @@ create_documents_table = """
         attached_project INTEGER NOT NULL,
         name TEXT NOT NULL,
         format TEXT NOT NULL,
-        file_url TEXT NOT NULL,
-        FOREIGN KEY(attached_project) REFERENCES projects(project_id)  
+        file_url TEXT NOT NULL UNIQUE,
+        FOREIGN KEY(attached_project) REFERENCES projects(project_id) ON DELETE CASCADE
     );
 """
 
