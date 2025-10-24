@@ -13,15 +13,10 @@ database = 'python_web'
 
 engine = create_engine(f'postgresql://{username}:{password}@{host}:{port}/{database}')
 
-
 # Define the base class
 class Base(DeclarativeBase):
     def to_dict(self):
-        db_dict = self.__dict__.copy()
-        if db_dict['_sa_instance_state']:
-            del db_dict['_sa_instance_state']
-        return db_dict
-
+        return {key:value for key, value in self.__dict__.items() if key != '_sa_instance_state'}
 
 # Define the Product class mapped to the 'products' table
 class User(Base):
@@ -32,7 +27,6 @@ class User(Base):
 
     # Define a relationship to the User model
     projects: Mapped[list["Project"]] = relationship(back_populates="user", cascade="all, delete-orphan")
-
     # Define relationship with ProjectParticipant model
     project_participants: Mapped[list["ProjectParticipant"]] = relationship(back_populates="user",
                                                                             cascade="all, delete-orphan")
@@ -149,14 +143,8 @@ if CREATE_TABLES:
 if __name__ == '__main__':
     session = Session()
 
-    document_db = session.execute(
-        select(Document).where(
-            (Document.document_id == 4)
-        )
-    ).scalar_one_or_none()
-    if document_db:
-        if document_db.project.owner == 3:
-            print('deleted')
-        print('Not deleted')
+    result:Document = session.execute(select(Document).where(Document.document_id == 7)).scalar_one_or_none()
+
+    print(result.to_dict())
 
     session.close()
