@@ -4,7 +4,7 @@ from hashlib import sha1
 
 CREATE_TABLES = False
 
-# Set up the database connection
+# Set up the db connection
 username = 'postgres'
 password = 'admin'
 host = 'localhost'  # or the IP address of your PostgresSQL server
@@ -107,7 +107,7 @@ class ProjectParticipant(Base):
 
 
 
-# Set up the database session
+# Set up the db session
 Session = sessionmaker(bind=engine)
 
 

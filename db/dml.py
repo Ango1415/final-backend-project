@@ -7,7 +7,7 @@ user = "postgres"
 password = "admin"
 host = "localhost"
 
-# Connect to an existing database
+# Connect to an existing db
 conn = psycopg2.connect(
     dbname=dbname,
     user=user,

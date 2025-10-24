@@ -6,7 +6,7 @@ user = "postgres"
 password = "admin"
 host = "localhost"
 
-# Connect to an existing database
+# Connect to an existing db
 conn = psycopg2.connect(
     dbname=dbname,
     user=user,
@@ -62,7 +62,7 @@ try:
     cur.execute(create_projects_table)
     cur.execute(create_project_participants_table)
     cur.execute(create_documents_table)
-    conn.commit()  # Commit changes to the database
+    conn.commit()  # Commit changes to the db
     print("Tables created successfully")
 except Exception as e:
     print("Error occurred while creating tables:", e)

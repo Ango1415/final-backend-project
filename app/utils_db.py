@@ -2,12 +2,12 @@ from typing import Union
 from http import HTTPStatus
 from fastapi import HTTPException
 from sqlalchemy import select
-import database.db_orm as db
+import db.orm as db
+
+session = db.Session()
 
 # USERS ---------------------------------------------------------------------------
-
 def create_user(user: db.User) -> None :
-    session = db.Session()
     try:
         session.add(user)
         session.commit()
@@ -15,12 +15,8 @@ def create_user(user: db.User) -> None :
         session.rollback()
         raise HTTPException(status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
                             detail='No access to db, try again later')
-    finally:
-        session.close()
-        del session
 
 def read_user_by_username(username: str) -> Union[db.User, None]:
-    session = db.Session()
     try:
         user = session.execute(
             select(db.User).where(
@@ -31,12 +27,8 @@ def read_user_by_username(username: str) -> Union[db.User, None]:
     except Exception:
         raise HTTPException(status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
                             detail='No access to db, try again later')
-    finally:
-        session.close()
-        del session
 
 def read_user_by_username_password(username: str, password:str) -> Union[db.User, None]:
-    session = db.Session()
     try:
         user = session.execute(
             select(db.User).where(
@@ -47,14 +39,9 @@ def read_user_by_username_password(username: str, password:str) -> Union[db.User
     except Exception:
         raise HTTPException(status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
                             detail='No access to db, try again later')
-    finally:
-        session.close()
-        del session
-
 
 # PROJECTS --------------------------------------------------------------------------------------------------
 def create_project(project: db.Project) -> None:
-    session = db.Session()
     try:
         # Create the new project in db
         session.add(project)
@@ -69,12 +56,8 @@ def create_project(project: db.Project) -> None:
         session.rollback()
         raise HTTPException(status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
                             detail=f"ERROR - Project creation failed: 'No access to db, try again later'")
-    finally:
-        session.close()
-        del session
 
 def validate_project_participant(project_id:int, user:db.User) -> Union[db.ProjectParticipant, None]:
-    session = db.Session()
     try:
         project_participant = session.execute(
             select(db.ProjectParticipant).where(
@@ -84,12 +67,8 @@ def validate_project_participant(project_id:int, user:db.User) -> Union[db.Proje
         return project_participant
     except Exception:
         raise HTTPException(status_code=HTTPStatus.INTERNAL_SERVER_ERROR, detail=f'No access to db, try again later ')
-    finally:
-        session.close()
-        del session
 
 def read_participant_projects(user:db.User) -> list[db.Project]:
-    session = db.Session()
     try:
         # Search for all user projects, whether they are user-owned or shared.
         participant_projects_db = session.execute(
@@ -103,12 +82,8 @@ def read_participant_projects(user:db.User) -> list[db.Project]:
         return projects_db
     except Exception:
         raise HTTPException(status_code=HTTPStatus.INTERNAL_SERVER_ERROR, detail='No access to db, try again later')
-    finally:
-        session.close()
-        del session
 
 def read_project_by_project_name_user(project_name:str, user:db.User) -> list[db.Project]:
-    session = db.Session()
     try:
         project_db = session.execute(
             select(db.Project).where(
@@ -118,12 +93,8 @@ def read_project_by_project_name_user(project_name:str, user:db.User) -> list[db
         return project_db
     except Exception:
         raise HTTPException(status_code=HTTPStatus.INTERNAL_SERVER_ERROR, detail='No access to db, try again later')
-    finally:
-        session.close()
-        del session
 
-def read_project_by_project_id(project_id:int, session:db.sessionmaker=None) -> Union[db.Project, None]:
-    if not session: session = db.Session()
+def read_project_by_project_id(project_id:int) -> Union[db.Project, None]:
     try:
         project = session.execute(
             select(db.Project).where(
@@ -133,15 +104,10 @@ def read_project_by_project_id(project_id:int, session:db.sessionmaker=None) -> 
         return project
     except Exception:
         raise HTTPException(status_code=HTTPStatus.INTERNAL_SERVER_ERROR, detail=f'No access to db, try again later ')
-    finally:
-        if not session:
-            session.close()
-            del session
 
 def update_project(project_id:int, project_name:str, project_description:str) -> None:
-    session = db.Session()
     try:
-        project_db = read_project_by_project_id(project_id, session)
+        project_db = read_project_by_project_id(project_id)
         if project_db:
             project_db.name = project_name
             project_db.description = project_description
@@ -154,14 +120,10 @@ def update_project(project_id:int, project_name:str, project_description:str) ->
     except Exception:
         session.rollback()
         raise HTTPException(status_code=HTTPStatus.INTERNAL_SERVER_ERROR, detail=f'No access to db, try again later')
-    finally:
-        session.close()
-        del session
 
 def delete_project(project_id:int, user:db.User) -> None:
-    session = db.Session()
     try:
-        project_db = read_project_by_project_id(project_id, session)
+        project_db = read_project_by_project_id(project_id)
         if project_db and project_db.owner == user.user_id:
             session.delete(project_db)
             session.commit()
@@ -173,13 +135,9 @@ def delete_project(project_id:int, user:db.User) -> None:
     except Exception :
         session.rollback()
         raise HTTPException(status_code=HTTPStatus.INTERNAL_SERVER_ERROR, detail='No access to db, try again later')
-    finally:
-        session.close()
-        del session
 
 # DOCUMENTS --------------------------------------------------------------------------------------------------
 def create_document(document:db.Document) -> None:
-    session = db.Session()
     try:
         session.add(document)
         session.commit()
@@ -187,41 +145,28 @@ def create_document(document:db.Document) -> None:
     except Exception:
         session.rollback()
         raise HTTPException(status_code=HTTPStatus.INTERNAL_SERVER_ERROR, detail='No access to db, try again later')
-    finally:
-        session.close()
-        del session
 
 def read_documents(project_id:int) -> Union[list[db.Document], None]:
-    session = db.Session()
     try:
         documents_db = session.execute(select(db.Document).where(
             db.Document.attached_project == project_id
         )).scalars().all()
         return documents_db
-    except Exception as e:
+    except Exception:
         raise HTTPException(status_code=HTTPStatus.INTERNAL_SERVER_ERROR, detail='No access to db, try again later')
-    finally:
-        session.close()
-        del session
 
-def read_document_by_id(document_id:int, session:db.sessionmaker=None) -> Union[db.Document, None]:
-    if not session: session = db.Session()
+def read_document_by_id(document_id:int) -> Union[db.Document, None]:
     try:
         document_db = session.execute(select(db.Document).where(
             db.Document.document_id == document_id
         )).scalar_one_or_none()
         return document_db
-    except Exception as e:
+    except Exception:
         raise HTTPException(status_code=HTTPStatus.INTERNAL_SERVER_ERROR, detail='No access to db, try again later')
-    finally:
-        if not session:
-            session.close()
-            del session
 
 def update_document(document_id:int, document_name:str, document_file_url:str) -> None:
-    session = db.Session()
     try:
-        document_db = read_document_by_id(document_id, session)
+        document_db = read_document_by_id(document_id)
         if document_db:
             document_db.name = document_name
             document_db.file_url = document_file_url
@@ -234,15 +179,11 @@ def update_document(document_id:int, document_name:str, document_file_url:str) -
     except Exception:
         session.rollback()
         raise HTTPException(status_code=HTTPStatus.INTERNAL_SERVER_ERROR, detail=f'No access to db, try again later')
-    finally:
-        session.close()
-        del session
 
 def delete_document(document_id:int, user:db.User) -> None:
-    session = db.Session()
     try:
-        document_db = read_document_by_id(document_id, session)
-        project_db = read_project_by_project_id(document_db.attached_project, session)
+        document_db = read_document_by_id(document_id)
+        project_db = read_project_by_project_id(document_db.__dict__['attached_project'])
 
         if document_db and project_db.owner == user.user_id:
             session.delete(document_db)
@@ -255,6 +196,32 @@ def delete_document(document_id:int, user:db.User) -> None:
     except Exception:
         session.rollback()
         raise HTTPException(status_code=HTTPStatus.INTERNAL_SERVER_ERROR, detail='No access to db, try again later')
-    finally:
-        session.close()
-        del session
+
+def read_project_participation(project_id:int, user:db.User) -> Union[db.Project, None]:
+    try:
+        participation = session.execute(select(db.ProjectParticipant).where(
+            (db.ProjectParticipant.project_id == project_id) & (db.ProjectParticipant.user_id == user.user_id)
+        )).scalar_one_or_none()
+        return participation
+    except Exception:
+        raise HTTPException(status_code=HTTPStatus.INTERNAL_SERVER_ERROR,)
+
+def create_project_participation(project_id:int, participant_username: str, user:db.User) -> None:
+    try:
+        new_participant_db = read_user_by_username(participant_username)
+        project_db = read_project_by_project_id(project_id)
+        if project_db.owner == user.user_id:
+            participation = read_project_participation(project_id, new_participant_db)
+            if not participation:
+                new_participation = db.ProjectParticipant(project_id=project_id, user_id=new_participant_db.__dict__['user_id'])
+                session.add(new_participation)
+                session.commit()
+                return
+            raise HTTPException(status_code=HTTPStatus.CONFLICT,
+                                detail=f"The user {participant_username} already has participation on this project.")
+        raise HTTPException(status_code=HTTPStatus.UNAUTHORIZED)
+    except HTTPException as http_e:
+        raise http_e
+    except Exception as e:
+        session.rollback()
+        raise e
