@@ -37,15 +37,17 @@ project_participants = [
     (2, 3)
 ]
 
-try:
-    cur.executemany(insert_users_records, users)
-    cur.executemany(insert_projects_records, projects)
-    cur.executemany(insert_project_participants_records, project_participants)
-    conn.commit()
-    print("Records inserted successfully")
-except Exception as e:
-    print("Error occurred while inserting records:", e)
-    conn.rollback()  # Rollback changes on error
-finally:
-    cur.close()  # Close the cursor
-    conn.close()  # Close the connection
+if __name__ == '__main__':
+    # Execute SQL commands to populate tables
+    try:
+        cur.executemany(insert_users_records, users)
+        cur.executemany(insert_projects_records, projects)
+        cur.executemany(insert_project_participants_records, project_participants)
+        conn.commit()
+        print("Records inserted successfully")
+    except Exception as e:
+        print("Error occurred while inserting records:", e)
+        conn.rollback()  # Rollback changes on error
+    finally:
+        cur.close()  # Close the cursor
+        conn.close()  # Close the connection

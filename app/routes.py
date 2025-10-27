@@ -10,7 +10,12 @@ import db.orm as db
 app = FastAPI()
 
 @app.post("/auth")
-def create_user(user: models.UserIn) -> dict:
+def create_user(user: models.UserIn) -> dict[str, str]:
+    """
+    Endpoint to create a new user in the app.
+    :param user: Pydantic User model (JSON) used to receive the data needed to create a new user.
+    :return: dict (JSON) containing a message with the result of the operation.
+    """
     username = user.username
     password = user.password
     check_password = user.check_password
@@ -31,6 +36,11 @@ def create_user(user: models.UserIn) -> dict:
 
 @app.post("/login")
 def login_service(form_data: Annotated[OAuth2PasswordRequestForm, Depends()]) -> models.Token:
+    """
+    Endpoint to provide the login service in the app.
+    :param form_data: Form data received from the client.
+    :return: Token pydantic model if login was successful.
+    """
     username = form_data.username
     password = sha1(form_data.password.encode()).hexdigest()
     if username and password:
@@ -46,6 +56,11 @@ def login_service(form_data: Annotated[OAuth2PasswordRequestForm, Depends()]) ->
 
 @app.get("/projects")
 def get_projects(auth_user: Annotated[db.User, Depends(auth.authentication)]) -> Union[list[models.ProjectOut], dict]:
+    """
+    Endpoint to retrieve all projects attached to a user (from his property or shared) in the app.
+    :param auth_user: dependency injection with the process of authentication.
+    :return: list of projects attached to a user.
+    """
     projects_db = utils_db.read_participant_projects(auth_user)
     if len(projects_db) != 0:
         projects = []
@@ -58,7 +73,13 @@ def get_projects(auth_user: Annotated[db.User, Depends(auth.authentication)]) ->
 
 @app.post("/projects")
 def create_project(project: models.ProjectIn,
-                   auth_user: Annotated[db.User, Depends(auth.authentication)]) -> dict:
+                   auth_user: Annotated[db.User, Depends(auth.authentication)]) -> dict[str, str]:
+    """
+    Endpoint to create a new project in the app.
+    :param project: Project model (JSON) used to receive the data needed to create a new project.
+    :param auth_user: dependency injection with the process of authentication.
+    :return: dict (JSON) containing a message with the result of the operation.
+    """
     name = project.name
     description = project.description
     if name :
@@ -75,6 +96,12 @@ def create_project(project: models.ProjectIn,
 @app.get("/project/{project_id}/info")
 def get_project_details(project_id:int,
                         auth_user: Annotated[db.User, Depends(auth.authentication)]) -> models.ProjectOut:
+    """
+    Endpoint to retrieve the details of a specific project.
+    :param project_id: id of the project to retrieve.
+    :param auth_user: dependency injection with the process of authentication.
+    :return: Project pydantic model with the information about the project.
+    """
     if project_id:
         is_project_participant = utils_db.validate_project_participant(project_id, auth_user)
         if is_project_participant:
@@ -87,6 +114,13 @@ def get_project_details(project_id:int,
 @app.put("/project/{project_id}/info")
 def update_project_details(project_id:int, project: models.ProjectIn,
                            auth_user: Annotated[db.User, Depends(auth.authentication)]) -> dict[str, str]:
+    """
+    Endpoint to update the details of a specific project.
+    :param project_id: id of the project (int) to update.
+    :param project: Project model (JSON) used to receive the data used to update the project.
+    :param auth_user: dependency injection with the process of authentication.
+    :return: dict (JSON) containing a message with the result of the operation.
+    """
     name = project.name
     description = project.description
     is_project_participant = utils_db.validate_project_participant(project_id, auth_user)
@@ -98,12 +132,25 @@ def update_project_details(project_id:int, project: models.ProjectIn,
 @app.delete("/project/{project_id}")
 def delete_project(project_id:int,
                    auth_user: Annotated[db.User, Depends(auth.authentication)]) -> dict[str, str]:
+    """
+    Endpoint to delete a specific project.
+    :param project_id: id of the project (int) to delete.
+    :param auth_user: dependency injection with the process of authentication.
+    :return: dict (JSON) containing a message with the result of the operation.
+    """
     utils_db.delete_project(project_id, auth_user)
     return {'message': 'Project deleted successfully.'}
 
 @app.post("/project/{project_id}/documents")
 def upload_project_documents(project_id:int, documents:list[UploadFile],
                              auth_user: Annotated[db.User, Depends(auth.authentication)]) -> dict[str, str]:
+    """
+    Endpoint to upload documents attached to a specific project.
+    :param project_id: id of the project (int) to upload documents to.
+    :param documents: UploadFile object used to obtain uploaded documents, always obtained from a client form.
+    :param auth_user: dependency injection with the process of authentication.
+    :return: dict (JSON) containing a message with the result of the operation.
+    """
     if len(documents) != 0:
         is_project_participant = utils_db.validate_project_participant(project_id, auth_user)
         if is_project_participant:
@@ -122,8 +169,15 @@ def upload_project_documents(project_id:int, documents:list[UploadFile],
 
 @app.get("/project/{project_id}/documents")
 def get_project_documents(project_id:int,
-                          auth_user: Annotated[db.User, Depends(auth.authentication)]) -> Union[list[
-    models.DocumentOut], dict]:
+                          auth_user: Annotated[db.User, Depends(auth.authentication)]
+                          ) -> Union[list[models.DocumentOut], dict]:
+    """
+    Endpoint to get documents attached to a specific project.
+    :param project_id: id of the project (int) to get documents from.
+    :param auth_user: dependency injection with the process of authentication.
+    :return: a list of models.Document objects attached to a specific project. if not a dict with the message of empty
+    list of documents.
+    """
     is_project_participant = utils_db.validate_project_participant(project_id, auth_user)
     if is_project_participant:
         documents_db = utils_db.read_documents(project_id)
@@ -137,7 +191,13 @@ def get_project_documents(project_id:int,
 
 @app.get("/document/{document_id}")
 def download_project_document(document_id:int,
-                              auth_user: Annotated[db.User, Depends(auth.authentication)]):
+                              auth_user: Annotated[db.User, Depends(auth.authentication)]) -> models.DocumentOut:
+    """
+    Endpoint to download a specific document attached to a specific project.
+    :param document_id: id of the document (int) to get.
+    :param auth_user: dependency injection with the process of authentication.
+    :return: a Document Pydantic model that contains the document to download.
+    """
     document_db = utils_db.read_document_by_id(document_id)
     if document_db:
         is_project_participant = utils_db.validate_project_participant(document_db.attached_project, auth_user)
@@ -149,7 +209,14 @@ def download_project_document(document_id:int,
 
 @app.put("/document/{document_id}")
 def update_document(document_id:int, document: models.DocumentIn,
-                    auth_user: Annotated[db.User, Depends(auth.authentication)]):
+                    auth_user: Annotated[db.User, Depends(auth.authentication)]) -> dict[str, str]:
+    """
+    Endpoint to update a specific document attached to a specific project.
+    :param document_id: id of the document (int) to update.
+    :param document: Document pydantic model with the data needed to update the document.
+    :param auth_user: dependency injection with the process of authentication.
+    :return: dict (JSON) containing a message with the result of the operation.
+    """
     name = document.name
     url = document.file_url
     document_db = utils_db.read_document_by_id(document_id)
@@ -164,7 +231,13 @@ def update_document(document_id:int, document: models.DocumentIn,
 
 @app.delete("/document/{document_id}")
 def delete_project_document(document_id:int,
-                            auth_user: Annotated[db.User, Depends(auth.authentication)]):
+                            auth_user: Annotated[db.User, Depends(auth.authentication)]) -> dict[str, str]:
+    """
+    Endpoint to delete a specific document attached to a specific project.
+    :param document_id: id of the document (int) to delete.
+    :param auth_user: dependency injection with the process of authentication.
+    :return: dict (JSON) containing a message with the result of the operation.
+    """
     document_db = utils_db.read_document_by_id(document_id)
     if document_db:
         utils_db.delete_document(document_id, auth_user)
@@ -173,10 +246,17 @@ def delete_project_document(document_id:int,
                         detail='No document was found with that id. Try it again.')
 
 @app.get("/project/{project_id}/invite")
-def grant_access_to_user(project_id:int, user:str,
-                         auth_user: Annotated[db.User, Depends(auth.authentication)]):
+def grant_access_to_user(project_id:int, username:str,
+                         auth_user: Annotated[db.User, Depends(auth.authentication)]) -> dict[str, str]:
+    """
+    Endpoint to grant a user access to a specific project. This user is not the original project owner.
+    :param project_id: id of the project (int) to grant access.
+    :param username: name of the user (str) to grant access to.
+    :param auth_user: dependency injection with the process of authentication.
+    :return: dict (JSON) containing a message with the result of the operation.
+    """
     project_db = utils_db.read_project_by_project_id(project_id)
     if project_db.owner == auth_user.user_id:
-        utils_db.create_project_participation(project_id, user, auth_user)
-        return {'message': f"You've granted access to '{user}' to use this project."}
+        utils_db.create_project_participation(project_id, username, auth_user)
+        return {'message': f"You've granted access to '{username}' to use this project."}
     raise HTTPException(status_code=HTTPStatus.UNAUTHORIZED)

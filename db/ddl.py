@@ -55,18 +55,18 @@ create_documents_table = """
     );
 """
 
-
-# Execute SQL commands to create tables
-try:
-    cur.execute(create_users_table)
-    cur.execute(create_projects_table)
-    cur.execute(create_project_participants_table)
-    cur.execute(create_documents_table)
-    conn.commit()  # Commit changes to the db
-    print("Tables created successfully")
-except Exception as e:
-    print("Error occurred while creating tables:", e)
-    conn.rollback()  # Rollback changes on error
-finally:
-    cur.close()  # Close the cursor
-    conn.close()  # Close the connection
+if __name__ == '__main__':
+    # Execute SQL commands to create tables
+    try:
+        cur.execute(create_users_table)
+        cur.execute(create_projects_table)
+        cur.execute(create_project_participants_table)
+        cur.execute(create_documents_table)
+        conn.commit()  # Commit changes to the db
+        print("Tables created successfully")
+    except Exception as e:
+        print("Error occurred while creating tables:", e)
+        conn.rollback()  # Rollback changes on error
+    finally:
+        cur.close()  # Close the cursor
+        conn.close()  # Close the connection
