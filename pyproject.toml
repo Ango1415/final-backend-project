@@ -1,0 +1,28 @@
+[project]
+name = "final-backend-project"
+version = "0.1.0"
+description = "Final backend project for the EPAM's Python Specialization program."
+authors = [
+    {name = "Angel F. Gomez E."}
+]
+license = {text = "EPAM"}
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "fastapi (>=0.121.0)",
+    "psycopg2-binary (>=2.9.11)",
+    "pyjwt (>=2.10.1)",
+    "pytest (>=8.4.2)",
+    "pytest-cov (>=7.0.0)",
+    "sqlalchemy (>=2.0.44)",
+    "uvicorn (>=0.38.0,<0.39.0)",
+    "python-multipart (>=0.0.20,<0.0.21)"
+]
+package-mode = false
+
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
+package-mode = false
+
