@@ -4,7 +4,7 @@ from unittest.mock import patch
 
 import pytest
 
-from app.utils_db.utils_db_document.utils_db_document_impl import UtilsDbDocumentImpl
+from src.app.utils_db.utils_db_document.utils_db_document_impl import UtilsDbDocumentImpl
 
 class DocumentDummy:
     def __init__(self) -> None:
@@ -13,16 +13,16 @@ class DocumentDummy:
 
 class TestUnitary:
 
-    @patch("app.utils_db.session_singleton.SessionSingleton")
-    @patch("db.orm.Document")
+    @patch("src.app.utils_db.session_singleton.SessionSingleton")
+    @patch("src.db.orm.Document")
     def test_create_document(self, mock_document, mock_session_singleton):
         utils_db_document = UtilsDbDocumentImpl(mock_session_singleton)
         utils_db_document.create_document(mock_document)
         assert mock_session_singleton.session.add.called
         assert mock_session_singleton.session.commit.called
 
-    @patch("app.utils_db.session_singleton.SessionSingleton")
-    @patch("db.orm.Document")
+    @patch("src.app.utils_db.session_singleton.SessionSingleton")
+    @patch("src.db.orm.Document")
     def test_create_document_exception(self,mock_document, mock_session_singleton):
         mock_session_singleton.session.add.side_effect = Exception
         utils_db_document = UtilsDbDocumentImpl(mock_session_singleton)
@@ -33,7 +33,7 @@ class TestUnitary:
         assert expected.value.detail == 'No access to db, try again later.'
         assert mock_session_singleton.session.rollback.called
 
-    @patch("app.utils_db.session_singleton.SessionSingleton")
+    @patch("src.app.utils_db.session_singleton.SessionSingleton")
     def test_read_documents(self, mock_session_singleton):
         project_id = 1
         list_documents = [DocumentDummy(), DocumentDummy()]
@@ -47,7 +47,7 @@ class TestUnitary:
         assert value == list_documents
         assert mock_session_singleton.session.execute.called
 
-    @patch("app.utils_db.session_singleton.SessionSingleton")
+    @patch("src.app.utils_db.session_singleton.SessionSingleton")
     def test_read_documents_exception(self, mock_session_singleton):
         project_id = 1
         list_documents = [DocumentDummy(), DocumentDummy()]
@@ -64,7 +64,7 @@ class TestUnitary:
         assert expected.value.status_code == HTTPStatus.INTERNAL_SERVER_ERROR
         assert expected.value.detail == 'No access to db, try again later.'
 
-    @patch("app.utils_db.session_singleton.SessionSingleton")
+    @patch("src.app.utils_db.session_singleton.SessionSingleton")
     def test_read_document_by_id(self, mock_session_singleton):
         document_id = 1
         document = DocumentDummy()
@@ -77,7 +77,7 @@ class TestUnitary:
         assert isinstance(value, DocumentDummy)
         assert mock_session_singleton.session.execute.called
 
-    @patch("app.utils_db.session_singleton.SessionSingleton")
+    @patch("src.app.utils_db.session_singleton.SessionSingleton")
     def test_read_document_by_id_exception(self, mock_session_singleton):
         document_id = 1
         document = DocumentDummy()
@@ -93,8 +93,8 @@ class TestUnitary:
         assert expected.value.status_code == HTTPStatus.INTERNAL_SERVER_ERROR
         assert expected.value.detail == 'No access to db, try again later.'
 
-    @patch("app.utils_db.utils_db_document.utils_db_document_impl.UtilsDbDocumentImpl.read_document_by_id")
-    @patch("app.utils_db.session_singleton.SessionSingleton")
+    @patch("src.app.utils_db.utils_db_document.utils_db_document_impl.UtilsDbDocumentImpl.read_document_by_id")
+    @patch("src.app.utils_db.session_singleton.SessionSingleton")
     def test_update_document(self, mock_session_singleton, mock_read_document):
         document_id = 1
         document_name = 'str'
@@ -109,8 +109,8 @@ class TestUnitary:
         assert document.name == document_name
         assert document.file_url == document_file_url
 
-    @patch("app.utils_db.utils_db_document.utils_db_document_impl.UtilsDbDocumentImpl.read_document_by_id")
-    @patch("app.utils_db.session_singleton.SessionSingleton")
+    @patch("src.app.utils_db.utils_db_document.utils_db_document_impl.UtilsDbDocumentImpl.read_document_by_id")
+    @patch("src.app.utils_db.session_singleton.SessionSingleton")
     def test_update_document_not_found(self, mock_session_singleton, mock_read_document):
         document_id = 1
         document_name = 'str'
@@ -125,8 +125,8 @@ class TestUnitary:
         assert expected.value.status_code == HTTPStatus.NOT_FOUND
         assert expected.value.detail == 'No project able to apply this process was found with that id. Try it again.'
 
-    @patch("app.utils_db.utils_db_document.utils_db_document_impl.UtilsDbDocumentImpl.read_document_by_id")
-    @patch("app.utils_db.session_singleton.SessionSingleton")
+    @patch("src.app.utils_db.utils_db_document.utils_db_document_impl.UtilsDbDocumentImpl.read_document_by_id")
+    @patch("src.app.utils_db.session_singleton.SessionSingleton")
     def test_update_document_exception(self, mock_session_singleton, mock_read_document):
         document_id = 1
         document_name = 'str'
@@ -144,10 +144,10 @@ class TestUnitary:
         assert expected.value.detail == 'No access to db, try again later.'
         assert mock_session_singleton.session.rollback.called
 
-    @patch("app.utils_db.utils_db_document.utils_db_document_impl.UtilsDbDocumentImpl.read_document_by_id")
-    @patch("app.utils_db.session_singleton.SessionSingleton")
-    @patch("db.orm.Project")
-    @patch("db.orm.User")
+    @patch("src.app.utils_db.utils_db_document.utils_db_document_impl.UtilsDbDocumentImpl.read_document_by_id")
+    @patch("src.app.utils_db.session_singleton.SessionSingleton")
+    @patch("src.db.orm.Project")
+    @patch("src.db.orm.User")
     def test_delete_document(self, mock_user, mock_project, mock_session_singleton, mock_read_document):
         document_id = 1
         user_id = 2
@@ -163,10 +163,10 @@ class TestUnitary:
         assert mock_session_singleton.session.commit.called
         assert mock_session_singleton.session.delete.called
 
-    @patch("app.utils_db.utils_db_document.utils_db_document_impl.UtilsDbDocumentImpl.read_document_by_id")
-    @patch("app.utils_db.session_singleton.SessionSingleton")
-    @patch("db.orm.Project")
-    @patch("db.orm.User")
+    @patch("src.app.utils_db.utils_db_document.utils_db_document_impl.UtilsDbDocumentImpl.read_document_by_id")
+    @patch("src.app.utils_db.session_singleton.SessionSingleton")
+    @patch("src.db.orm.Project")
+    @patch("src.db.orm.User")
     def test_delete_document_not_found(self, mock_user, mock_project, mock_session_singleton, mock_read_document):
         document_id = 1
         user_id = 2
@@ -182,10 +182,10 @@ class TestUnitary:
         assert expected.value.status_code == HTTPStatus.NOT_FOUND
         assert expected.value.detail == 'No project able to apply this process was found with that id. Try it again.'
 
-    @patch("app.utils_db.utils_db_document.utils_db_document_impl.UtilsDbDocumentImpl.read_document_by_id")
-    @patch("app.utils_db.session_singleton.SessionSingleton")
-    @patch("db.orm.Project")
-    @patch("db.orm.User")
+    @patch("src.app.utils_db.utils_db_document.utils_db_document_impl.UtilsDbDocumentImpl.read_document_by_id")
+    @patch("src.app.utils_db.session_singleton.SessionSingleton")
+    @patch("src.db.orm.Project")
+    @patch("src.db.orm.User")
     def test_delete_document_exception(self, mock_user, mock_project, mock_session_singleton, mock_read_document):
         document_id = 1
         user_id = 2

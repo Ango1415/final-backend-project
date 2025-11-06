@@ -4,12 +4,12 @@ from fastapi import HTTPException, Depends
 from fastapi.security import OAuth2PasswordRequestForm
 from hashlib import sha1
 
-from app.utils_db.utils_db_user.utils_db_user_impl import UtilsDbUserImpl
-from app.utils_db.session_singleton import SessionSingleton
-from app.auth.auth import Authenticator
-import app.models.models as models
-from app.app import app
-import db.orm as db
+from src.app.utils_db.utils_db_user.utils_db_user_impl import UtilsDbUserImpl
+from src.app.utils_db.session_singleton import SessionSingleton
+from src.app.auth.auth import Authenticator
+import src.app.models.models as models
+from src.app.app import app
+import src.db.orm as db
 
 utils_db_user = UtilsDbUserImpl(SessionSingleton())
 @app.post("/auth")

@@ -2,19 +2,20 @@ from typing import Annotated, Union
 from http import HTTPStatus
 from fastapi import HTTPException, Depends
 
-from app.utils_db.utils_db_project.utils_db_project_impl import UtilsDbProjectImpl
-from app.utils_db.utils_db_user.utils_db_user_impl import UtilsDbUserImpl
-from app.utils_db.session_singleton import SessionSingleton
-from app.auth.auth import Authenticator
-from app.models import models
-from app.app import app
-import db.orm as db
+from src.app.utils_db.utils_db_project.utils_db_project_impl import UtilsDbProjectImpl
+from src.app.utils_db.utils_db_user.utils_db_user_impl import UtilsDbUserImpl
+from src.app.utils_db.session_singleton import SessionSingleton
+from src.app.auth.auth import Authenticator
+from src.app.models import models
+from src.app.app import app
+import src.db.orm as db
 
 utils_db_project = UtilsDbProjectImpl(SessionSingleton())
 utils_db_user = UtilsDbUserImpl(SessionSingleton())
 
 @app.get("/projects")
-def get_projects(auth_user: Annotated[db.User, Depends(Authenticator.authentication)]) -> Union[list[models.ProjectOut], dict]:
+def get_projects(auth_user: Annotated[db.User, Depends(Authenticator.authentication)]) -> Union[list[
+    models.ProjectOut], dict]:
     """
     Endpoint to retrieve all projects attached to a user (from his property or shared) in the app.
     :param auth_user: dependency injection with the process of authentication.

@@ -1,15 +1,14 @@
 from unittest.mock import patch
 
-import app.routes.project_routes as project_routes
-import app.utils_db.utils_db_project.utils_db_project_impl
-import db.orm as db
-from app.models import models
+import src.app.routes.project_routes as project_routes
+import src.db.orm as db
+from src.app.models import models
 
 
 class TestIntegration:
 
-    @patch("app.utils_db.utils_db_project.utils_db_project_impl.UtilsDbProjectImpl.read_participant_projects")
-    @patch("app.auth.auth.Authenticator.authentication")
+    @patch("src.app.utils_db.utils_db_project.utils_db_project_impl.UtilsDbProjectImpl.read_participant_projects")
+    @patch("src.app.auth.auth.Authenticator.authentication")
     def test_get_projects(self, mock_authentication, mock_read_projects):
         user = db.User(username="test", password="password")
         project = db.Project(project_id=1, name="test", description="description", owner=1)
@@ -25,9 +24,9 @@ class TestIntegration:
 
     # TODO: Add the additional test cases for get_projects functionality
 
-    @patch("app.utils_db.utils_db_project.utils_db_project_impl.UtilsDbProjectImpl.create_project")
-    @patch("app.utils_db.utils_db_project.utils_db_project_impl.UtilsDbProjectImpl.read_project_by_project_name_user")
-    @patch("app.auth.auth.Authenticator.authentication")
+    @patch("src.app.utils_db.utils_db_project.utils_db_project_impl.UtilsDbProjectImpl.create_project")
+    @patch("src.app.utils_db.utils_db_project.utils_db_project_impl.UtilsDbProjectImpl.read_project_by_project_name_user")
+    @patch("src.app.auth.auth.Authenticator.authentication")
     def test_create_project(self, mock_authentication, mock_read_project, mock_create_project):
         user = db.User(username="test", password="password")
         project = models.ProjectIn(name="test", description="description")
@@ -42,9 +41,9 @@ class TestIntegration:
 
     # TODO: Add the additional test cases for create_project functionality
 
-    @patch("app.utils_db.utils_db_project.utils_db_project_impl.UtilsDbProjectImpl.validate_project_participant")
-    @patch("app.utils_db.utils_db_project.utils_db_project_impl.UtilsDbProjectImpl.read_project_by_project_id")
-    @patch("app.auth.auth.Authenticator.authentication")
+    @patch("src.app.utils_db.utils_db_project.utils_db_project_impl.UtilsDbProjectImpl.validate_project_participant")
+    @patch("src.app.utils_db.utils_db_project.utils_db_project_impl.UtilsDbProjectImpl.read_project_by_project_id")
+    @patch("src.app.auth.auth.Authenticator.authentication")
     def test_get_project_details(self, mock_authentication, mock_read_project, mock_project_participant):
         user = db.User(username="test", password="password")
         project_id = 1
@@ -60,9 +59,9 @@ class TestIntegration:
 
     # TODO: Add the additional test cases for get_project_details functionality
 
-    @patch("app.utils_db.utils_db_project.utils_db_project_impl.UtilsDbProjectImpl.validate_project_participant")
-    @patch("app.utils_db.utils_db_project.utils_db_project_impl.UtilsDbProjectImpl.update_project")
-    @patch("app.auth.auth.Authenticator.authentication")
+    @patch("src.app.utils_db.utils_db_project.utils_db_project_impl.UtilsDbProjectImpl.validate_project_participant")
+    @patch("src.app.utils_db.utils_db_project.utils_db_project_impl.UtilsDbProjectImpl.update_project")
+    @patch("src.app.auth.auth.Authenticator.authentication")
     def test_update_project_details(self, mock_authentication, mock_update_project, mock_project_participant):
         user = db.User(username="test", password="password")
         project_id = 1
@@ -75,8 +74,8 @@ class TestIntegration:
 
     # TODO: Add the additional test cases for update_project_details functionality
 
-    @patch("app.utils_db.utils_db_project.utils_db_project_impl.UtilsDbProjectImpl.delete_project")
-    @patch("app.auth.auth.Authenticator.authentication")
+    @patch("src.app.utils_db.utils_db_project.utils_db_project_impl.UtilsDbProjectImpl.delete_project")
+    @patch("src.app.auth.auth.Authenticator.authentication")
     def test_delete_project(self, mock_authentication, mock_delete_project):
         user = db.User(username="test", password="password")
         project_id = 1
@@ -89,10 +88,10 @@ class TestIntegration:
 
     # TODO: Add the additional test cases for delete_project functionality
 
-    @patch("app.utils_db.utils_db_project.utils_db_project_impl.UtilsDbProjectImpl.create_project_participation")
-    @patch("app.utils_db.utils_db_project.utils_db_project_impl.UtilsDbProjectImpl.read_project_by_project_id")
-    @patch("app.utils_db.utils_db_user.utils_db_user_impl.UtilsDbUserImpl.read_user_by_username")
-    @patch("app.auth.auth.Authenticator.authentication")
+    @patch("src.app.utils_db.utils_db_project.utils_db_project_impl.UtilsDbProjectImpl.create_project_participation")
+    @patch("src.app.utils_db.utils_db_project.utils_db_project_impl.UtilsDbProjectImpl.read_project_by_project_id")
+    @patch("src.app.utils_db.utils_db_user.utils_db_user_impl.UtilsDbUserImpl.read_user_by_username")
+    @patch("src.app.auth.auth.Authenticator.authentication")
     def test_grant_access_to_user(self, mock_authentication, mock_read_user, mock_read_project, mock_create_participation):
         user = db.User(user_id=1, username="test", password="password")
         project = db.Project(project_id=1, name="test", description="description", owner=1)

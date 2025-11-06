@@ -3,9 +3,9 @@ from http import HTTPStatus
 from fastapi import HTTPException
 from sqlalchemy import select
 
-from app.utils_db.utils_db_document.utils_db_document import UtilsDbDocument
-from app.utils_db.utils_db import UtilsDb
-import db.orm as db
+from src.app.utils_db.utils_db_document.utils_db_document import UtilsDbDocument
+from src.app.utils_db.utils_db import UtilsDb
+import src.db.orm as db
 
 
 class UtilsDbDocumentImpl(UtilsDb, UtilsDbDocument):

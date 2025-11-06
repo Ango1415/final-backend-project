@@ -2,13 +2,13 @@ from typing import Annotated, Union
 from http import HTTPStatus
 from fastapi import HTTPException, Depends, UploadFile
 
-from app.utils_db.utils_db_document.utils_db_document_impl import UtilsDbDocumentImpl
-from app.utils_db.utils_db_project.utils_db_project_impl import UtilsDbProjectImpl
-from app.utils_db.session_singleton import SessionSingleton
-from app.auth.auth import Authenticator
-from app.models import models
-from app.app import app
-import db.orm as db
+from src.app.utils_db.utils_db_document.utils_db_document_impl import UtilsDbDocumentImpl
+from src.app.utils_db.utils_db_project.utils_db_project_impl import UtilsDbProjectImpl
+from src.app.utils_db.session_singleton import SessionSingleton
+from src.app.auth.auth import Authenticator
+from src.app.models import models
+from src.app.app import app
+import src.db.orm as db
 
 utils_db_document = UtilsDbDocumentImpl(SessionSingleton())
 utils_db_project = UtilsDbProjectImpl(SessionSingleton())

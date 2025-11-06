@@ -1,17 +1,17 @@
 from unittest.mock import patch
 
 
-import db.orm as db
-from app.models import models
-from app.routes import document_routes
+import src.db.orm as db
+from src.app.models import models
+from src.app.routes import document_routes
 
 
 class TestIntegration:
 
-    @patch("app.utils_db.utils_db_document.utils_db_document_impl.UtilsDbDocumentImpl.create_document")
-    @patch("app.utils_db.utils_db_project.utils_db_project_impl.UtilsDbProjectImpl.validate_project_participant")
-    @patch("app.routes.document_routes.UploadFile")
-    @patch("app.auth.auth.Authenticator.authentication")
+    @patch("src.app.utils_db.utils_db_document.utils_db_document_impl.UtilsDbDocumentImpl.create_document")
+    @patch("src.app.utils_db.utils_db_project.utils_db_project_impl.UtilsDbProjectImpl.validate_project_participant")
+    @patch("src.app.routes.document_routes.UploadFile")
+    @patch("src.app.auth.auth.Authenticator.authentication")
     def test_upload_project_documents(self, mock_authentication, mock_upload_file,
                                       mock_participant, mock_create_document):
         user = db.User(username="test", password="password")
@@ -29,9 +29,9 @@ class TestIntegration:
 
     # TODO: Add the additional test cases for upload_project_documents functionality
 
-    @patch("app.utils_db.utils_db_document.utils_db_document_impl.UtilsDbDocumentImpl.read_documents")
-    @patch("app.utils_db.utils_db_project.utils_db_project_impl.UtilsDbProjectImpl.validate_project_participant")
-    @patch("app.auth.auth.Authenticator.authentication")
+    @patch("src.app.utils_db.utils_db_document.utils_db_document_impl.UtilsDbDocumentImpl.read_documents")
+    @patch("src.app.utils_db.utils_db_project.utils_db_project_impl.UtilsDbProjectImpl.validate_project_participant")
+    @patch("src.app.auth.auth.Authenticator.authentication")
     def test_get_project_documents(self, mock_authentication, mock_participant, mock_read_documents):
         user = db.User(username="test", password="password")
         document = db.Document(document_id=1, name="test", format="application/test",
@@ -55,9 +55,9 @@ class TestIntegration:
     # TODO: Add the additional test cases for get_project_documents functionality
 
 
-    @patch("app.utils_db.utils_db_project.utils_db_project_impl.UtilsDbProjectImpl.validate_project_participant")
-    @patch("app.utils_db.utils_db_document.utils_db_document_impl.UtilsDbDocumentImpl.read_document_by_id")
-    @patch("app.auth.auth.Authenticator.authentication")
+    @patch("src.app.utils_db.utils_db_project.utils_db_project_impl.UtilsDbProjectImpl.validate_project_participant")
+    @patch("src.app.utils_db.utils_db_document.utils_db_document_impl.UtilsDbDocumentImpl.read_document_by_id")
+    @patch("src.app.auth.auth.Authenticator.authentication")
     def test_download_project_document(self, mock_authentication, mock_read_document, mock_participant):
         user = db.User(username="test", password="password")
         document_id = 1
@@ -79,10 +79,10 @@ class TestIntegration:
 
     # TODO: Add the additional test cases for download_project_document functionality
 
-    @patch("app.utils_db.utils_db_document.utils_db_document_impl.UtilsDbDocumentImpl.update_document")
-    @patch("app.utils_db.utils_db_project.utils_db_project_impl.UtilsDbProjectImpl.validate_project_participant")
-    @patch("app.utils_db.utils_db_document.utils_db_document_impl.UtilsDbDocumentImpl.read_document_by_id")
-    @patch("app.auth.auth.Authenticator.authentication")
+    @patch("src.app.utils_db.utils_db_document.utils_db_document_impl.UtilsDbDocumentImpl.update_document")
+    @patch("src.app.utils_db.utils_db_project.utils_db_project_impl.UtilsDbProjectImpl.validate_project_participant")
+    @patch("src.app.utils_db.utils_db_document.utils_db_document_impl.UtilsDbDocumentImpl.read_document_by_id")
+    @patch("src.app.auth.auth.Authenticator.authentication")
     def test_update_document(self, mock_authentication, mock_read_document, mock_participant, mock_update_document):
         user = db.User(username="test", password="password")
         document_id = 1
@@ -97,10 +97,10 @@ class TestIntegration:
 
     # TODO: Add the additional test cases for update_document functionality
 
-    @patch("app.utils_db.utils_db_document.utils_db_document_impl.UtilsDbDocumentImpl.delete_document")
-    @patch("app.utils_db.utils_db_project.utils_db_project_impl.UtilsDbProjectImpl.read_project_by_project_id")
-    @patch("app.utils_db.utils_db_document.utils_db_document_impl.UtilsDbDocumentImpl.read_document_by_id")
-    @patch("app.auth.auth.Authenticator.authentication")
+    @patch("src.app.utils_db.utils_db_document.utils_db_document_impl.UtilsDbDocumentImpl.delete_document")
+    @patch("src.app.utils_db.utils_db_project.utils_db_project_impl.UtilsDbProjectImpl.read_project_by_project_id")
+    @patch("src.app.utils_db.utils_db_document.utils_db_document_impl.UtilsDbDocumentImpl.read_document_by_id")
+    @patch("src.app.auth.auth.Authenticator.authentication")
     def test_delete_project_document(self, mock_authentication, mock_read_document, mock_read_project,
                                      mock_delete_document):
         user = db.User(username="test", password="password")

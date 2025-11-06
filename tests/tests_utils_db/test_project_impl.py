@@ -1,9 +1,9 @@
 from http import HTTPStatus
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 
 import pytest
 from fastapi import HTTPException
-from app.utils_db.utils_db_project.utils_db_project_impl import UtilsDbProjectImpl
+from src.app.utils_db.utils_db_project.utils_db_project_impl import UtilsDbProjectImpl
 
 
 # class UserDummy:
@@ -21,9 +21,9 @@ class ProjectParticipantDummy:
 
 class TestUnitary:
 
-    @patch("app.utils_db.session_singleton.SessionSingleton")
-    @patch("db.orm.ProjectParticipant")
-    @patch("db.orm.Project")
+    @patch("src.app.utils_db.session_singleton.SessionSingleton")
+    @patch("src.db.orm.ProjectParticipant")
+    @patch("src.db.orm.Project")
     def test_create_project(self, mock_project, mock_project_participant, mock_session_singleton):
         utils_db_project = UtilsDbProjectImpl(mock_session_singleton)
         utils_db_project.create_project(mock_project)
@@ -31,9 +31,9 @@ class TestUnitary:
         assert mock_session_singleton.session.commit.call_count == 2
         assert mock_project_participant.called
 
-    @patch("app.utils_db.session_singleton.SessionSingleton")
-    @patch("db.orm.ProjectParticipant")
-    @patch("db.orm.Project")
+    @patch("src.app.utils_db.session_singleton.SessionSingleton")
+    @patch("src.db.orm.ProjectParticipant")
+    @patch("src.db.orm.Project")
     def test_create_project_exception(self, mock_project, mock_project_participant, mock_session_singleton):
         mock_project_participant.side_effect = Exception
         utils_db_project = UtilsDbProjectImpl(mock_session_singleton)
@@ -43,8 +43,8 @@ class TestUnitary:
         assert expected.value.status_code == HTTPStatus.INTERNAL_SERVER_ERROR
         assert expected.value.detail == f"ERROR - Project creation failed: 'No access to db, try again later'"
 
-    @patch("app.utils_db.session_singleton.SessionSingleton")
-    @patch("db.orm.User")
+    @patch("src.app.utils_db.session_singleton.SessionSingleton")
+    @patch("src.db.orm.User")
     def test_read_participant_projects(self, mock_user, mock_session_singleton):
         project_participant = ProjectParticipantDummy()
         project_participants = [project_participant, project_participant]
@@ -59,8 +59,8 @@ class TestUnitary:
         assert type(value) == list
         assert mock_session_singleton.session.execute.called
 
-    @patch("app.utils_db.session_singleton.SessionSingleton")
-    @patch("db.orm.User")
+    @patch("src.app.utils_db.session_singleton.SessionSingleton")
+    @patch("src.db.orm.User")
     def test_read_participant_projects_exception(self, mock_user, mock_session_singleton):
         project_participant = ProjectParticipantDummy()
         project_participants = [project_participant, project_participant]
@@ -77,8 +77,8 @@ class TestUnitary:
         assert expected.value.status_code == HTTPStatus.INTERNAL_SERVER_ERROR
         assert expected.value.detail == 'No access to db, try again later'
 
-    @patch("app.utils_db.session_singleton.SessionSingleton")
-    @patch("db.orm.User")
+    @patch("src.app.utils_db.session_singleton.SessionSingleton")
+    @patch("src.db.orm.User")
     def test_read_project_by_project_name_user(self, mock_user, mock_session_singleton):
         project_name= 'test'
         project = ProjectDummy()
@@ -91,8 +91,8 @@ class TestUnitary:
         assert type(value) == ProjectDummy
         assert mock_session_singleton.session.execute.called
 
-    @patch("app.utils_db.session_singleton.SessionSingleton")
-    @patch("db.orm.User")
+    @patch("src.app.utils_db.session_singleton.SessionSingleton")
+    @patch("src.db.orm.User")
     def test_read_project_by_project_name_user_exception(self, mock_user, mock_session_singleton):
         project_name= 'test'
         project = ProjectDummy()
@@ -107,7 +107,7 @@ class TestUnitary:
         assert expected.value.status_code == HTTPStatus.INTERNAL_SERVER_ERROR
         assert expected.value.detail == 'No access to db, try again later'
 
-    @patch("app.utils_db.session_singleton.SessionSingleton")
+    @patch("src.app.utils_db.session_singleton.SessionSingleton")
     def test_read_project_by_project_id(self, mock_session_singleton):
         project_id = 1
         project = ProjectDummy()
@@ -120,7 +120,7 @@ class TestUnitary:
         assert type(value) == ProjectDummy
         assert mock_session_singleton.session.execute.called
 
-    @patch("app.utils_db.session_singleton.SessionSingleton")
+    @patch("src.app.utils_db.session_singleton.SessionSingleton")
     def test_read_project_by_project_id_exception(self, mock_session_singleton):
         project_id = 1
         project = ProjectDummy()
@@ -135,8 +135,8 @@ class TestUnitary:
         assert expected.value.status_code == HTTPStatus.INTERNAL_SERVER_ERROR
         assert expected.value.detail == 'No access to db, try again later'
 
-    @patch("app.utils_db.utils_db_project.utils_db_project_impl.UtilsDbProjectImpl.read_project_by_project_id")
-    @patch("app.utils_db.session_singleton.SessionSingleton")
+    @patch("src.app.utils_db.utils_db_project.utils_db_project_impl.UtilsDbProjectImpl.read_project_by_project_id")
+    @patch("src.app.utils_db.session_singleton.SessionSingleton")
     def test_update_project(self, mock_session_singleton, mock_read_project):
         project_id = 1
         project_name = 'test'
@@ -152,8 +152,8 @@ class TestUnitary:
         assert project.name == project_name
         assert project.description == project_description
 
-    @patch("app.utils_db.utils_db_project.utils_db_project_impl.UtilsDbProjectImpl.read_project_by_project_id")
-    @patch("app.utils_db.session_singleton.SessionSingleton")
+    @patch("src.app.utils_db.utils_db_project.utils_db_project_impl.UtilsDbProjectImpl.read_project_by_project_id")
+    @patch("src.app.utils_db.session_singleton.SessionSingleton")
     def test_update_project_not_found(self, mock_session_singleton, mock_read_project):
         project_id = 1
         project_name = 'test'
@@ -167,8 +167,8 @@ class TestUnitary:
         assert expected.value.status_code == HTTPStatus.NOT_FOUND
         assert expected.value.detail == 'No project able to apply this process was found with that id. Try it again.'
 
-    @patch("app.utils_db.utils_db_project.utils_db_project_impl.UtilsDbProjectImpl.read_project_by_project_id")
-    @patch("app.utils_db.session_singleton.SessionSingleton")
+    @patch("src.app.utils_db.utils_db_project.utils_db_project_impl.UtilsDbProjectImpl.read_project_by_project_id")
+    @patch("src.app.utils_db.session_singleton.SessionSingleton")
     def test_update_project_exception(self, mock_session_singleton, mock_read_project):
         project_id = 1
         project_name = 'test'
@@ -185,9 +185,9 @@ class TestUnitary:
         assert expected.value.detail == 'No access to db, try again later.'
         assert mock_session_singleton.session.rollback.called
 
-    @patch("app.utils_db.utils_db_project.utils_db_project_impl.UtilsDbProjectImpl.read_project_by_project_id")
-    @patch("app.utils_db.session_singleton.SessionSingleton")
-    @patch("db.orm.User")
+    @patch("src.app.utils_db.utils_db_project.utils_db_project_impl.UtilsDbProjectImpl.read_project_by_project_id")
+    @patch("src.app.utils_db.session_singleton.SessionSingleton")
+    @patch("src.db.orm.User")
     def test_delete_project(self, mock_user, mock_session_singleton, mock_read_project):
         project_id = 1
         owner_id = 2
@@ -203,9 +203,9 @@ class TestUnitary:
         assert mock_session_singleton.session.commit.called
         assert mock_read_project.called
 
-    @patch("app.utils_db.utils_db_project.utils_db_project_impl.UtilsDbProjectImpl.read_project_by_project_id")
-    @patch("app.utils_db.session_singleton.SessionSingleton")
-    @patch("db.orm.User")
+    @patch("src.app.utils_db.utils_db_project.utils_db_project_impl.UtilsDbProjectImpl.read_project_by_project_id")
+    @patch("src.app.utils_db.session_singleton.SessionSingleton")
+    @patch("src.db.orm.User")
     def test_delete_project_not_found(self, mock_user, mock_session_singleton, mock_read_project):
         project_id = 1
         owner_id = 2
@@ -219,9 +219,9 @@ class TestUnitary:
         assert expected.value.status_code == HTTPStatus.NOT_FOUND
         assert expected.value.detail == 'No project able to apply this process was found with that id. Try it again.'
 
-    @patch("app.utils_db.utils_db_project.utils_db_project_impl.UtilsDbProjectImpl.read_project_by_project_id")
-    @patch("app.utils_db.session_singleton.SessionSingleton")
-    @patch("db.orm.User")
+    @patch("src.app.utils_db.utils_db_project.utils_db_project_impl.UtilsDbProjectImpl.read_project_by_project_id")
+    @patch("src.app.utils_db.session_singleton.SessionSingleton")
+    @patch("src.db.orm.User")
     def test_delete_project_exception(self, mock_user, mock_session_singleton, mock_read_project):
         project_id = 1
         owner_id = 2
@@ -239,8 +239,8 @@ class TestUnitary:
         assert expected.value.detail == 'No access to db, try again later.'
         assert mock_session_singleton.session.rollback.called
 
-    @patch("app.utils_db.session_singleton.SessionSingleton")
-    @patch("db.orm.User")
+    @patch("src.app.utils_db.session_singleton.SessionSingleton")
+    @patch("src.db.orm.User")
     def test_validate_project_participant(self, mock_user, mock_session_singleton):
         project_id = 1
         project_participant = ProjectParticipantDummy()
@@ -253,8 +253,8 @@ class TestUnitary:
         assert mock_session_singleton.session.execute.called
         assert isinstance(value, ProjectParticipantDummy)
 
-    @patch("app.utils_db.session_singleton.SessionSingleton")
-    @patch("db.orm.User")
+    @patch("src.app.utils_db.session_singleton.SessionSingleton")
+    @patch("src.db.orm.User")
     def test_validate_project_participant_exception(self, mock_user, mock_session_singleton):
         project_id = 1
         project_participant = ProjectParticipantDummy()
@@ -269,12 +269,12 @@ class TestUnitary:
         assert expected.value.status_code == HTTPStatus.INTERNAL_SERVER_ERROR
         assert expected.value.detail == 'No access to db, try again later.'
 
-    @patch("app.utils_db.utils_db_project.utils_db_project_impl.UtilsDbProjectImpl.read_project_by_project_id")
-    @patch("app.utils_db.utils_db_project.utils_db_project_impl.UtilsDbProjectImpl.validate_project_participant")
-    @patch("app.utils_db.session_singleton.SessionSingleton")
-    @patch("db.orm.User")
-    @patch("db.orm.User")
-    @patch("db.orm.ProjectParticipant")
+    @patch("src.app.utils_db.utils_db_project.utils_db_project_impl.UtilsDbProjectImpl.read_project_by_project_id")
+    @patch("src.app.utils_db.utils_db_project.utils_db_project_impl.UtilsDbProjectImpl.validate_project_participant")
+    @patch("src.app.utils_db.session_singleton.SessionSingleton")
+    @patch("src.db.orm.User")
+    @patch("src.db.orm.User")
+    @patch("src.db.orm.ProjectParticipant")
     def test_create_project_participation(self, mock_participation, mock_user_participant, mock_user_owner,
                                           mock_session_singleton, mock_validate_participation, mock_read_project):
         project_id = 1
@@ -297,12 +297,12 @@ class TestUnitary:
         assert mock_session_singleton.session.add.called
         assert mock_session_singleton.session.commit.called
 
-    @patch("app.utils_db.utils_db_project.utils_db_project_impl.UtilsDbProjectImpl.read_project_by_project_id")
-    @patch("app.utils_db.utils_db_project.utils_db_project_impl.UtilsDbProjectImpl.validate_project_participant")
-    @patch("app.utils_db.session_singleton.SessionSingleton")
-    @patch("db.orm.User")
-    @patch("db.orm.User")
-    @patch("db.orm.ProjectParticipant")
+    @patch("src.app.utils_db.utils_db_project.utils_db_project_impl.UtilsDbProjectImpl.read_project_by_project_id")
+    @patch("src.app.utils_db.utils_db_project.utils_db_project_impl.UtilsDbProjectImpl.validate_project_participant")
+    @patch("src.app.utils_db.session_singleton.SessionSingleton")
+    @patch("src.db.orm.User")
+    @patch("src.db.orm.User")
+    @patch("src.db.orm.ProjectParticipant")
     def test_create_project_participation_conflict(self, mock_participation, mock_user_participant, mock_user_owner,
                                           mock_session_singleton, mock_validate_participation, mock_read_project):
         project_id = 1
@@ -324,12 +324,12 @@ class TestUnitary:
         assert expected.value.status_code == HTTPStatus.CONFLICT
         assert mock_read_project.called
 
-    @patch("app.utils_db.utils_db_project.utils_db_project_impl.UtilsDbProjectImpl.read_project_by_project_id")
-    @patch("app.utils_db.utils_db_project.utils_db_project_impl.UtilsDbProjectImpl.validate_project_participant")
-    @patch("app.utils_db.session_singleton.SessionSingleton")
-    @patch("db.orm.User")
-    @patch("db.orm.User")
-    @patch("db.orm.ProjectParticipant")
+    @patch("src.app.utils_db.utils_db_project.utils_db_project_impl.UtilsDbProjectImpl.read_project_by_project_id")
+    @patch("src.app.utils_db.utils_db_project.utils_db_project_impl.UtilsDbProjectImpl.validate_project_participant")
+    @patch("src.app.utils_db.session_singleton.SessionSingleton")
+    @patch("src.db.orm.User")
+    @patch("src.db.orm.User")
+    @patch("src.db.orm.ProjectParticipant")
     def test_create_project_participation_exception(self, mock_participation, mock_user_participant, mock_user_owner,
                                           mock_session_singleton, mock_validate_participation, mock_read_project):
         project_id = 1
@@ -352,12 +352,12 @@ class TestUnitary:
         assert expected.value.status_code == HTTPStatus.UNAUTHORIZED
 
 
-    @patch("app.utils_db.utils_db_project.utils_db_project_impl.UtilsDbProjectImpl.read_project_by_project_id")
-    @patch("app.utils_db.utils_db_project.utils_db_project_impl.UtilsDbProjectImpl.validate_project_participant")
-    @patch("app.utils_db.session_singleton.SessionSingleton")
-    @patch("db.orm.User")
-    @patch("db.orm.User")
-    @patch("db.orm.ProjectParticipant")
+    @patch("src.app.utils_db.utils_db_project.utils_db_project_impl.UtilsDbProjectImpl.read_project_by_project_id")
+    @patch("src.app.utils_db.utils_db_project.utils_db_project_impl.UtilsDbProjectImpl.validate_project_participant")
+    @patch("src.app.utils_db.session_singleton.SessionSingleton")
+    @patch("src.db.orm.User")
+    @patch("src.db.orm.User")
+    @patch("src.db.orm.ProjectParticipant")
     def test_create_project_participation_exception(self, mock_participation, mock_user_participant, mock_user_owner,
                                           mock_session_singleton, mock_validate_participation, mock_read_project):
         project_id = 1

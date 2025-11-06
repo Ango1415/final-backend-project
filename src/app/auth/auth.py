@@ -6,9 +6,9 @@ from jwt.exceptions import InvalidTokenError
 import jwt
 from datetime import datetime, timedelta, timezone
 
-import db.orm as db
-from app.utils_db.session_singleton import SessionSingleton
-from app.utils_db.utils_db_user.utils_db_user_impl import UtilsDbUserImpl
+import src.db.orm as db
+from src.app.utils_db.session_singleton import SessionSingleton
+from src.app.utils_db.utils_db_user.utils_db_user_impl import UtilsDbUserImpl
 
 utils_db_user = UtilsDbUserImpl(SessionSingleton())
 

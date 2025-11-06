@@ -2,9 +2,9 @@ from typing import Union
 from http import HTTPStatus
 from fastapi import HTTPException
 from sqlalchemy import select
-import db.orm as db
-from app.utils_db.utils_db import UtilsDb
-from app.utils_db.utils_db_project.utils_db_project import UtilsDbProject
+import src.db.orm as db
+from src.app.utils_db.utils_db import UtilsDb
+from src.app.utils_db.utils_db_project.utils_db_project import UtilsDbProject
 
 
 class UtilsDbProjectImpl(UtilsDb, UtilsDbProject):
