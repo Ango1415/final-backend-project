@@ -15,7 +15,8 @@ dependencies = [
     "pytest-cov",
     "SQLAlchemy",
     "tox (>=4.32.0,<5.0.0)",
-    "python-multipart (>=0.0.20,<0.0.21)"
+    "python-multipart (>=0.0.20,<0.0.21)",
+    "uvicorn (>=0.38.0,<0.39.0)"
 ]
 
 [build-system]

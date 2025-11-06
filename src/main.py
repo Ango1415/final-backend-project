@@ -1,5 +1,7 @@
 import uvicorn
-from src.app import app
+from src.app.app import app
+from src.app.routes import user_routes, project_routes, document_routes
+
 
 """
 TODO:
