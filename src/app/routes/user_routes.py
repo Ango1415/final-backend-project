@@ -28,7 +28,7 @@ def create_user(user: models.UserIn) -> dict[str, str]:
             if password == check_password:
                 new_user = db.User(username=username, password=sha1(password.encode()).hexdigest())
                 utils_db_user.create_user(new_user)
-                return {'message': f"User '{user.username}' successfully created"}
+                return {'message': f"User '{user.username}' successfully created!"}
             raise HTTPException(status_code=HTTPStatus.BAD_REQUEST,
                                 detail=f"Your password and its repetition don't match, try it again please.")
         raise HTTPException(status_code=HTTPStatus.BAD_REQUEST,
