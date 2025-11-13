@@ -11,12 +11,14 @@ class TestIntegration:
 
     @patch("src.db.s3.upload_document")
     @patch("src.db.s3.get_total_files_size")
+    @patch("src.app.utils_db.utils_db_document.utils_db_document_impl.UtilsDbDocumentImpl.read_document_by_name_project_id")
     @patch("src.app.utils_db.utils_db_document.utils_db_document_impl.UtilsDbDocumentImpl.create_document")
     @patch("src.app.utils_db.utils_db_project.utils_db_project_impl.UtilsDbProjectImpl.validate_project_participant")
     @patch("src.app.routes.document_routes.UploadFile")
     @patch("src.app.auth.auth.Authenticator.authentication")
     def test_upload_project_documents(self, mock_authentication, mock_upload_file, mock_participant,
-                                      mock_create_document, mock_get_total_files_size_s3, mock_upload_document_s3):
+                                      mock_create_document, mock_read_document, mock_get_total_files_size_s3,
+                                      mock_upload_document_s3):
         user = db.User(username="test", password="password")
         project_id = 1
         mock_get_total_files_size_s3.return_value = 0
@@ -25,6 +27,7 @@ class TestIntegration:
         mock_upload_file.size = 0
         documents = [mock_upload_file]
         mock_participant.return_value = True
+        mock_read_document.return_value = False
 
         value = document_routes.upload_project_documents(project_id, documents, user)
 
