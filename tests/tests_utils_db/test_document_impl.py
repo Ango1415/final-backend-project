@@ -180,7 +180,7 @@ class TestUnitary:
             utils_db_document.delete_document(document_id, mock_user, mock_project)
         assert isinstance(expected.value, HTTPException)
         assert expected.value.status_code == HTTPStatus.NOT_FOUND
-        assert expected.value.detail == 'No project able to apply this process was found with that id. Try it again.'
+        assert expected.value.detail ==  "No document able to apply this process was found with that id. Try it again."
 
     @patch("src.app.utils_db.utils_db_document.utils_db_document_impl.UtilsDbDocumentImpl.read_document_by_id")
     @patch("src.app.utils_db.session_singleton.SessionSingleton")

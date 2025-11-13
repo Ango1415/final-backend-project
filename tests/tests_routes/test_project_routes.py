@@ -74,10 +74,17 @@ class TestIntegration:
 
     # TODO: Add the additional test cases for update_project_details functionality
 
+    @patch("src.db.s3.delete_document")
+    @patch("src.app.utils_db.utils_db_document.utils_db_document_impl.UtilsDbDocumentImpl.read_documents")
+    @patch("src.app.utils_db.utils_db_project.utils_db_project_impl.UtilsDbProjectImpl.read_project_by_project_id")
     @patch("src.app.utils_db.utils_db_project.utils_db_project_impl.UtilsDbProjectImpl.delete_project")
     @patch("src.app.auth.auth.Authenticator.authentication")
-    def test_delete_project(self, mock_authentication, mock_delete_project):
-        user = db.User(username="test", password="password")
+    def test_delete_project(self, mock_authentication, mock_delete_project, mock_read_project, mock_read_documents,
+                            mock_delete_project_s3):
+        user = db.User(user_id=1, username="test", password="password")
+        document = db.Document(document_id=1, name="test", format="format", file_url="file_url", attached_project=1)
+        mock_read_project.return_value.owner = 1
+        mock_read_documents.return_value = [document]
         project_id = 1
 
         value = project_routes.delete_project(project_id, user)

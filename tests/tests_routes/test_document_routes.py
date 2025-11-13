@@ -2,22 +2,27 @@ from unittest.mock import patch
 
 
 import src.db.orm as db
+import src.db.s3
 from src.app.models import models
 from src.app.routes import document_routes
 
 
 class TestIntegration:
 
+    @patch("src.db.s3.upload_document")
+    @patch("src.db.s3.get_total_files_size")
     @patch("src.app.utils_db.utils_db_document.utils_db_document_impl.UtilsDbDocumentImpl.create_document")
     @patch("src.app.utils_db.utils_db_project.utils_db_project_impl.UtilsDbProjectImpl.validate_project_participant")
     @patch("src.app.routes.document_routes.UploadFile")
     @patch("src.app.auth.auth.Authenticator.authentication")
-    def test_upload_project_documents(self, mock_authentication, mock_upload_file,
-                                      mock_participant, mock_create_document):
+    def test_upload_project_documents(self, mock_authentication, mock_upload_file, mock_participant,
+                                      mock_create_document, mock_get_total_files_size_s3, mock_upload_document_s3):
         user = db.User(username="test", password="password")
         project_id = 1
+        mock_get_total_files_size_s3.return_value = 0
         mock_upload_file.filename = "test"
         mock_upload_file.content_type = "application/test"
+        mock_upload_file.size = 0
         documents = [mock_upload_file]
         mock_participant.return_value = True
 
@@ -72,18 +77,20 @@ class TestIntegration:
         assert value.document_id == 1
         assert value.name == "test"
         assert value.format == "application/test"
-        assert value.file_url == "../test"
+        assert value.file_url
         assert value.attached_project == 1
         assert mock_participant.called
         assert mock_read_document.called
 
     # TODO: Add the additional test cases for download_project_document functionality
 
+    @patch("src.db.s3.update_document")
     @patch("src.app.utils_db.utils_db_document.utils_db_document_impl.UtilsDbDocumentImpl.update_document")
     @patch("src.app.utils_db.utils_db_project.utils_db_project_impl.UtilsDbProjectImpl.validate_project_participant")
     @patch("src.app.utils_db.utils_db_document.utils_db_document_impl.UtilsDbDocumentImpl.read_document_by_id")
     @patch("src.app.auth.auth.Authenticator.authentication")
-    def test_update_document(self, mock_authentication, mock_read_document, mock_participant, mock_update_document):
+    def test_update_document(self, mock_authentication, mock_read_document, mock_participant,
+                             mock_update_document, mock_update_document_s3):
         user = db.User(username="test", password="password")
         document_id = 1
         document = models.DocumentIn(name="test_updated", file_url='../test_updated.pdf')
@@ -97,12 +104,13 @@ class TestIntegration:
 
     # TODO: Add the additional test cases for update_document functionality
 
+    @patch("src.db.s3.delete_document")
     @patch("src.app.utils_db.utils_db_document.utils_db_document_impl.UtilsDbDocumentImpl.delete_document")
     @patch("src.app.utils_db.utils_db_project.utils_db_project_impl.UtilsDbProjectImpl.read_project_by_project_id")
     @patch("src.app.utils_db.utils_db_document.utils_db_document_impl.UtilsDbDocumentImpl.read_document_by_id")
     @patch("src.app.auth.auth.Authenticator.authentication")
     def test_delete_project_document(self, mock_authentication, mock_read_document, mock_read_project,
-                                     mock_delete_document):
+                                     mock_delete_document, mock_delete_document_s3):
         user = db.User(username="test", password="password")
         document_id = 1
 

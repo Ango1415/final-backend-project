@@ -13,7 +13,7 @@ DOWNLOAD_LINK_EXPIRE_TIME = 300  # Expiry Link in seconds,5 MIN
 session = boto3.Session(
     aws_access_key_id="aws_access_key_id",
     aws_secret_access_key="aws_secret_access_key",
-    region_name='region_name'
+    region_name='us-east-1'
 )
 
 # Instance a client

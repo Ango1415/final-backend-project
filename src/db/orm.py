@@ -7,8 +7,8 @@ CREATE_TABLES = False
 # Set up the db connection
 username = 'postgres'
 password = 'admin'
-#host = 'localhost'  # for app without docker
-host = 'postgres'  # for dockerized db
+host = 'localhost'  # for app without docker
+#host = 'postgres'  # for dockerized db
 port = '5432'       # default PostgresSQL port
 database = 'python_web'
 
