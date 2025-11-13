@@ -1,4 +1,4 @@
-from sqlalchemy import create_engine, String, ForeignKey
+from sqlalchemy import create_engine, String, ForeignKey, inspect
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, sessionmaker, relationship
 from hashlib import sha1
 
@@ -7,7 +7,8 @@ CREATE_TABLES = False
 # Set up the db connection
 username = 'postgres'
 password = 'admin'
-host = 'localhost'  # or the IP address of your PostgresSQL server
+#host = 'localhost'  # for app without docker
+host = 'postgres'  # for dockerized db
 port = '5432'       # default PostgresSQL port
 database = 'python_web'
 
@@ -142,8 +143,46 @@ class ProjectParticipant(Base):
             project={self.project!r})
         )"""
 
+def create_tables():
+    Base.metadata.create_all(engine)
+    session = Session()
+    # Populating db
+    # Use SQLAlchemy to add a new product
+    user = User(username='angel_gomez', password=sha1('123'.encode()).hexdigest())
+    session.add(user)
+    user = User(username='fabian_estupinan', password=sha1('234'.encode()).hexdigest())
+    session.add(user)
+    session.commit()
 
+    project = Project(name='first_project', description='First project made for testing', owner=1)
+    session.add(project)
+    project = Project(name='second_project', description='Second project made for testing', owner=1)
+    session.add(project)
+    project = Project(name='main_project', description='Third project made for testing', owner=2)
+    session.add(project)
+    session.commit()
 
+    project_participant = ProjectParticipant(user_id=1, project_id=1)
+    session.add(project_participant)
+    project_participant = ProjectParticipant(user_id=1, project_id=2)
+    session.add(project_participant)
+    project_participant = ProjectParticipant(user_id=2, project_id=2)
+    session.add(project_participant)
+    project_participant = ProjectParticipant(user_id=2, project_id=3)
+    session.add(project_participant)
+    session.commit()
+
+def inspect_tables_existence():
+    inspector = inspect(engine)
+    table_names = ['users', 'projects', 'documents', 'project_participants']
+    # Check if the table exists
+    for table_name in table_names:
+        if not inspector.has_table(table_name):
+            print(f"Table '{table_name}' does not exist in the database.")
+            print("Creating DB schemas for the app...")
+            create_tables()
+            print("Done!")
+            break
 
 
 if __name__ == '__main__':
@@ -156,30 +195,4 @@ if __name__ == '__main__':
         """
         Creates tables and populate them if they don't exist.
         """
-        Base.metadata.create_all(engine)
-        session = Session()
-        # Populating db
-        # Use SQLAlchemy to add a new product
-        user = User(username='angel_gomez', password=sha1('123'.encode()).hexdigest())
-        session.add(user)
-        user = User(username='fabian_estupinan', password=sha1('234'.encode()).hexdigest())
-        session.add(user)
-        session.commit()
-
-        project = Project(name='first_project', description='First project made for testing', owner=1)
-        session.add(project)
-        project = Project(name='second_project', description='Second project made for testing', owner=1)
-        session.add(project)
-        project = Project(name='main_project', description='Third project made for testing', owner=2)
-        session.add(project)
-        session.commit()
-
-        project_participant = ProjectParticipant(user_id=1, project_id=1)
-        session.add(project_participant)
-        project_participant = ProjectParticipant(user_id=1, project_id=2)
-        session.add(project_participant)
-        project_participant = ProjectParticipant(user_id=2, project_id=2)
-        session.add(project_participant)
-        project_participant = ProjectParticipant(user_id=2, project_id=3)
-        session.add(project_participant)
-        session.commit()
+        create_tables()

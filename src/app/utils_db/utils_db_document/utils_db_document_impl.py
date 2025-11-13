@@ -10,7 +10,7 @@ import src.db.orm as db
 
 class UtilsDbDocumentImpl(UtilsDb, UtilsDbDocument):
 
-    def create_document(self, document:db.Document) -> None:
+    def create_document(self, document:db.Document) -> Union[int, None]:
         """
         Functionality to create a new document in the database.
         :param document: Document database object to be created.
@@ -19,7 +19,7 @@ class UtilsDbDocumentImpl(UtilsDb, UtilsDbDocument):
         try:
             self.session.session.add(document)
             self.session.session.commit()
-            return
+            return document.document_id
         except Exception:
             self.session.session.rollback()
             raise HTTPException(status_code=HTTPStatus.INTERNAL_SERVER_ERROR, detail='No access to db, try again later.')
@@ -47,6 +47,20 @@ class UtilsDbDocumentImpl(UtilsDb, UtilsDbDocument):
         try:
             document_db = self.session.session.execute(select(db.Document).where(
                 db.Document.document_id == document_id
+            )).scalar_one_or_none()
+            return document_db
+        except Exception:
+            raise HTTPException(status_code=HTTPStatus.INTERNAL_SERVER_ERROR, detail='No access to db, try again later.')
+
+    def read_document_by_name_project_id(self, document_name:str, project_id:int) -> Union[db.Document, None]:
+        """
+        Functionality to retrieve a document by its id.
+        :param document_id: id of the document to be retrieved.
+        :return: Document database object or None if no documents are found.
+        """
+        try:
+            document_db = self.session.session.execute(select(db.Document).where(
+                (db.Document.name == document_name) & (db.Document.attached_project == project_id)
             )).scalar_one_or_none()
             return document_db
         except Exception:
@@ -90,7 +104,7 @@ class UtilsDbDocumentImpl(UtilsDb, UtilsDbDocument):
                 self.session.session.commit()
                 return
             raise HTTPException(status_code=HTTPStatus.NOT_FOUND,
-                                detail='No project able to apply this process was found with that id. Try it again.')
+                                detail='No document able to apply this process was found with that id. Try it again.')
         except HTTPException as http_e:
             raise http_e
         except Exception:

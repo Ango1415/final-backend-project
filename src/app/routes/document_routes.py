@@ -8,6 +8,7 @@ from src.app.utils_db.session_singleton import SessionSingleton
 from src.app.auth.auth import Authenticator
 from src.app.models import models
 from src.app.app import app
+from src.db import s3
 import src.db.orm as db
 
 utils_db_document = UtilsDbDocumentImpl(SessionSingleton())
@@ -27,13 +28,26 @@ def upload_project_documents(project_id: int, documents: list[UploadFile],
         is_project_participant = utils_db_project.validate_project_participant(project_id, auth_user)
         if is_project_participant:
             for document in documents:
-                name = document.filename.lower().replace(' ', '_')
-                file_format = document.content_type
-                file_url = f'http://localhost:8000/project/{project_id}/documents/{name}'
-                attached_project = project_id
-                utils_db_document.create_document(
-                    db.Document(name=name, format=file_format, file_url=file_url, attached_project=attached_project)
-                )
+                size_storage_used = s3.get_total_files_size(project_id)
+                if utils_db_project.MAX_SIZE_PER_PROJECT <= size_storage_used + document.size:
+                    storage_availabe = utils_db_project.MAX_SIZE_PER_PROJECT - size_storage_used
+                    raise HTTPException(
+                        status_code=HTTPStatus.BAD_REQUEST,
+                        detail=f"Max capacity for uploaded docs reached. {storage_availabe} bytes available."
+                    )
+                else:
+                    name = document.filename.lower().replace(' ', '_')
+                    existence_doc = utils_db_document.read_document_by_name_project_id(name, project_id)
+                    if existence_doc: continue
+
+                    file_format = document.content_type
+                    file_url = "deprecated"
+                    attached_project = project_id
+                    utils_db_document.create_document(
+                        db.Document(name=name, format=file_format, file_url=file_url, attached_project=attached_project)
+                    )
+                    file = document.file
+                    s3.upload_document(name, file, project_id)
             return {'message': f"{len(documents)} documents successfully uploaded."}
         raise HTTPException(status_code=HTTPStatus.UNAUTHORIZED)
     raise HTTPException(status_code=HTTPStatus.BAD_REQUEST,
@@ -77,7 +91,10 @@ def download_project_document(document_id: int,
     if document_db:
         is_project_participant = utils_db_project.validate_project_participant(document_db.attached_project, auth_user)
         if is_project_participant:
-            return models.DocumentOut(**document_db.to_dict())
+            url = s3.get_document_url(document_db.name, document_db.attached_project)
+            document_out = models.DocumentOut(**document_db.to_dict())
+            document_out.file_url = url
+            return document_out
         raise HTTPException(status_code=HTTPStatus.UNAUTHORIZED)
     raise HTTPException(status_code=HTTPStatus.NOT_FOUND,
                         detail='No document was found with that id. Try it again.')
@@ -99,7 +116,9 @@ def update_document(document_id: int, document: models.DocumentIn,
     if document_db:
         is_project_participant = utils_db_project.validate_project_participant(document_db.attached_project, auth_user)
         if is_project_participant:
+            old_name = document_db.name
             utils_db_document.update_document(document_id, name, url)
+            s3.update_document(old_name, name, document_db.attached_project)
             return {'message': f"{name} document updated successfully."}
         raise HTTPException(status_code=HTTPStatus.UNAUTHORIZED)
     raise HTTPException(status_code=HTTPStatus.NOT_FOUND,
@@ -119,6 +138,7 @@ def delete_project_document(document_id: int,
     project_db = utils_db_project.read_project_by_project_id(document_db.attached_project)
     if document_db:
         utils_db_document.delete_document(document_id, auth_user, project_db)
+        s3.delete_document(document_db.name, document_db.attached_project)
         return {'message': f"Document deleted successfully."}
     raise HTTPException(status_code=HTTPStatus.NOT_FOUND,
                         detail='No document was found with that id. Try it again.')

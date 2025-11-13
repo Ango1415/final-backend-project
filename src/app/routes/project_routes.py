@@ -1,17 +1,22 @@
 from typing import Annotated, Union
 from http import HTTPStatus
 from fastapi import HTTPException, Depends
+from src.app.routes.document_routes import utils_db_document
+from src.db import s3
 
 from src.app.utils_db.utils_db_project.utils_db_project_impl import UtilsDbProjectImpl
 from src.app.utils_db.utils_db_user.utils_db_user_impl import UtilsDbUserImpl
+
 from src.app.utils_db.session_singleton import SessionSingleton
 from src.app.auth.auth import Authenticator
 from src.app.models import models
 from src.app.app import app
 import src.db.orm as db
 
-utils_db_project = UtilsDbProjectImpl(SessionSingleton())
 utils_db_user = UtilsDbUserImpl(SessionSingleton())
+utils_db_project = UtilsDbProjectImpl(SessionSingleton())
+uitls_db_project_participant = UtilsDbProjectImpl(SessionSingleton())
+
 
 @app.get("/projects")
 def get_projects(auth_user: Annotated[db.User, Depends(Authenticator.authentication)]) -> Union[list[
@@ -98,11 +103,19 @@ def delete_project(project_id:int,
     :param auth_user: dependency injection with the process of authentication.
     :return: dict (JSON) containing a message with the result of the operation.
     """
-    utils_db_project.delete_project(project_id, auth_user)
-    return {'message': 'Project deleted successfully.'}
+    project_db = utils_db_project.read_project_by_project_id(project_id)
+    #is_project_participant = utils_db_project.validate_project_participant(project_id, auth_user)
+    #if is_project_participant:
+    if project_db.owner == auth_user.user_id:
+        documents = utils_db_document.read_documents(project_id)
+        for document in documents:
+            s3.delete_document(document.name, project_id)
+        utils_db_project.delete_project(project_id, auth_user)
+        return {'message': 'Project deleted successfully.'}
+    raise HTTPException(status_code=HTTPStatus.UNAUTHORIZED)
 
-@app.get("/project/{project_id}/invite")
-def grant_access_to_user(project_id:int, username:str,
+@app.post("/project/{project_id}/invite")
+def grant_access_to_user(project_id:int, user:str,
                          auth_user: Annotated[db.User, Depends(Authenticator.authentication)]) -> dict[str, str]:
     """
     Endpoint to grant a user access to a specific project. This user is not the original project owner.
@@ -112,8 +125,8 @@ def grant_access_to_user(project_id:int, username:str,
     :return: dict (JSON) containing a message with the result of the operation.
     """
     project_db = utils_db_project.read_project_by_project_id(project_id)
-    new_participant_db = utils_db_user.read_user_by_username(username)
-    if project_db.owner == auth_user.user_id:
+    new_participant_db = utils_db_user.read_user_by_username(user)
+    if project_db and (project_db.owner == auth_user.user_id):
         utils_db_project.create_project_participation(project_id, new_participant_db, auth_user)
-        return {'message': f"You've granted access to '{username}' to use this project."}
+        return {'message': f"You've granted access to '{user}' to use this project."}
     raise HTTPException(status_code=HTTPStatus.UNAUTHORIZED)

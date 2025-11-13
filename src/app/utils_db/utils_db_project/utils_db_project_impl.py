@@ -7,7 +7,10 @@ from src.app.utils_db.utils_db import UtilsDb
 from src.app.utils_db.utils_db_project.utils_db_project import UtilsDbProject
 
 
+
 class UtilsDbProjectImpl(UtilsDb, UtilsDbProject):
+
+    MAX_SIZE_PER_PROJECT = 200000  # Max size in Bytes for the project documents.
     # PROJECTS --------------------------------------------------------------------------------------------------
     def create_project(self, project: db.Project) -> None:
         """
