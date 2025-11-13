@@ -1,4 +1,4 @@
-# 🧩 Final Backend Project
+# 🧩 Project Management - Backend App
 
 [![Build Status](https://img.shields.io/github/actions/workflow/status/Ango1415/final-backend-project/ci.yml?branch=main)](https://github.com/Ango1415/final-backend-project/actions)
 ![Python Version](https://img.shields.io/badge/Python-3.10+-blue.svg)
@@ -141,7 +141,7 @@ cd final-backend-project
 docker-compose up --build
 ```
 
-### Option 2: Using Poetry (Local Environment)
+### Option 2: Using Poetry (Local Environment) - you must to have installed PostgreSQL >= 18
 ```bash
 # Clone the repository
 git clone https://github.com/Ango1415/final-backend-project.git

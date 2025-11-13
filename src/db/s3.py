@@ -11,8 +11,8 @@ LAMBDA_NAME = "calculate_files_size"
 DOWNLOAD_LINK_EXPIRE_TIME = 300  # Expiry Link in seconds,5 MIN
 
 session = boto3.Session(
-    aws_access_key_id="aws_access_key_id",
-    aws_secret_access_key="aws_secret_access_key",
+    aws_access_key_id="",
+    aws_secret_access_key="",
     region_name='us-east-1'
 )
 
@@ -51,7 +51,7 @@ def get_total_files_size(project_id: int) -> int:
         return total_files_size
 
     except Exception as e:
-        raise HTTPException(status_code=HTTPStatus.INTERNAL_SERVER_ERROR, detail=f"Error uploading the file: {e}")
+        raise HTTPException(status_code=HTTPStatus.INTERNAL_SERVER_ERROR, detail=f"Error the stored files size : {e}")
 
 def upload_document(filename, file, project_id) -> None:
     try:
