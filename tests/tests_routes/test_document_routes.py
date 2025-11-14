@@ -1,8 +1,6 @@
 from unittest.mock import patch
 
-
 import src.db.orm as db
-import src.db.s3
 from src.app.models import models
 from src.app.routes import document_routes
 
@@ -62,11 +60,12 @@ class TestIntegration:
 
     # TODO: Add the additional test cases for get_project_documents functionality
 
-
+    @patch("src.db.s3.get_document_url")
     @patch("src.app.utils_db.utils_db_project.utils_db_project_impl.UtilsDbProjectImpl.validate_project_participant")
     @patch("src.app.utils_db.utils_db_document.utils_db_document_impl.UtilsDbDocumentImpl.read_document_by_id")
     @patch("src.app.auth.auth.Authenticator.authentication")
-    def test_download_project_document(self, mock_authentication, mock_read_document, mock_participant):
+    def test_download_project_document(self, mock_authentication, mock_read_document, mock_participant,
+                                       mock_get_document_url_s3):
         user = db.User(username="test", password="password")
         document_id = 1
         document = db.Document(document_id=1, name="test", format="application/test",
