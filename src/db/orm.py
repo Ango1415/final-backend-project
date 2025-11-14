@@ -7,8 +7,8 @@ CREATE_TABLES = False
 # Set up the db connection
 username = 'postgres'
 password = 'admin'
-#host = 'localhost'  # for app without docker
-host = 'postgres'  # for dockerized db
+host = 'localhost'  # for app without docker
+#host = 'postgres'  # for dockerized db
 port = '5432'       # default PostgresSQL port
 database = 'python_web'
 
@@ -94,7 +94,7 @@ class Document(Base):
     __tablename__ = 'documents'
     document_id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     name: Mapped[str] = mapped_column(String(50), nullable=False)
-    format: Mapped[str] = mapped_column(String(50), nullable=False)
+    format: Mapped[str] = mapped_column(String(100), nullable=False)
     file_url: Mapped[str] = mapped_column(String(200), nullable=False)
     attached_project: Mapped[int] = mapped_column(ForeignKey('projects.project_id', ondelete='CASCADE'),
                                                   nullable=False)
