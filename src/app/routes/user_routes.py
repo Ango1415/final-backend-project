@@ -30,7 +30,7 @@ def create_user(user: models.UserIn) -> dict[str, str]:
                 utils_db_user.create_user(new_user)
                 return {'message': f"User '{user.username}' successfully created!"}
             raise HTTPException(status_code=HTTPStatus.BAD_REQUEST,
-                                detail=f"Your password and its repetition don't match, try it again please.")
+                                detail=f"Your password and its repetition don't match, ")
         raise HTTPException(status_code=HTTPStatus.BAD_REQUEST,
                             detail=f"Username '{username}' already in use, try using another one")
     raise HTTPException(
