@@ -1,3 +1,5 @@
+![Project Banner](banner.jpg)
+
 # 🧩 Project Management - Backend App
 
 [![Build Status](https://img.shields.io/github/actions/workflow/status/Ango1415/final-backend-project/ci.yml?branch=main)](https://github.com/Ango1415/final-backend-project/actions)
