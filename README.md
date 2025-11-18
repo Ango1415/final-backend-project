@@ -10,6 +10,12 @@
 
 ---
 
+## 🎥 Explanatory video
+
+Link: https://www.youtube.com/watch?v=Z0HvLqmMM3g
+
+---
+
 ## 📋 Overview
 
 This project demonstrates my skills in **Python web backend development** using **FastAPI**.  
